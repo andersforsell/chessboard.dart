@@ -1,0 +1,72 @@
+<link rel="import" href="packages/polymer/polymer.html">
+<polymer-element name="chess-board" attributes="position orientation showNotation">
+  <template>
+    <style>
+     :host { display: block; }
+
+      /* clearfix */
+      .clearfix {
+        clear: both;
+      }
+
+      /* board */
+      .board {
+        border: 2px solid #404040;
+        -moz-box-sizing: content-box;
+        box-sizing: content-box;
+      }
+
+      /* square */
+      .square {
+        float: left;
+        position: relative;
+
+        /* disable any native browser highlighting */
+        -webkit-touch-callout: none;
+          -webkit-user-select: none;
+           -khtml-user-select: none;
+             -moz-user-select: none;
+              -ms-user-select: none;
+                  user-select: none;
+      }
+
+      /* white square */
+      .white {
+        background-color: #f0d9b5;
+        color: #b58863;
+      }
+
+      /* black square */
+      .black {
+        background-color: #b58863;
+        color: #f0d9b5;
+      }
+
+      /* highlighted square */
+      .highlight1, .highlight2 {
+        -webkit-box-shadow: inset 0 0 3px 3px yellow;
+        -moz-box-shadow: inset 0 0 3px 3px yellow;
+        box-shadow: inset 0 0 3px 3px yellow;
+      }
+
+      /* notation */
+      .notation {
+        cursor: default;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-size: 14px;
+        position: absolute;
+      }
+      .alpha {
+        bottom: 1px;
+        right: 3px;
+      }
+      .numeric {
+        top: 2px;
+        left: 2px;
+      }
+    </style>
+    <div class="board"></div>
+  </template>
+  <script type="application/dart" src="chess_board.dart"></script>
+</polymer-element>
+
