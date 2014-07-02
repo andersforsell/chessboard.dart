@@ -19,15 +19,22 @@ class ChessBoard extends PolymerElement {
 
   Element _boardEl;
 
+  Element _dragSquare;
+
   int _squareSize;
 
   Chess _currentPosition;
+
+  List _moves;
 
   ChessBoard.created() : super.created();
 
   @override
   void domReady() {
     _currentPosition = new Chess.fromFEN(position);
+    _moves = _currentPosition.moves({
+      'verbose': true
+    });
 
     _boardEl = shadowRoot.querySelector('.board');
 
@@ -63,20 +70,29 @@ class ChessBoard extends PolymerElement {
       for (var col in COLUMNS) {
         var square = "$col$row";
         var piece = _currentPosition.get(square);
-        var element = _boardEl.querySelector('#$square');
-        var pieceElement = element.querySelector('.piece');
-        if (pieceElement != null)
-          pieceElement.remove();
+        var squareElement = _boardEl.querySelector('#$square');
+        addDragDropEvents(squareElement);
+        var pieceElement = squareElement.querySelector('.piece');
+        if (pieceElement != null) pieceElement.remove();
         if (piece != null) {
           var pieceStr = '${piece.color}${piece.type.toUpperCase()}';
           pieceElement = new ImageElement(src: _buildPieceImgSrc(pieceStr),
-              width: _squareSize,
-              height: _squareSize);
-          element.children.add(pieceElement);
-          pieceElement.className = 'piece';
+              width: _squareSize, height: _squareSize)
+              ..className = 'piece'
+              ..onDragStart.listen(_onDragStart);
+          squareElement.children.add(pieceElement);
         }
       }
     }
+  }
+
+  void addDragDropEvents(Element element) {
+    element
+        ..onDragEnd.listen(_onDragEnd)
+        ..onDragEnter.listen(_onDragEnter)
+        ..onDragOver.listen(_onDragOver)
+        ..onDragLeave.listen(_onDragLeave)
+        ..onDrop.listen(_onDrop);
   }
 
   String _buildBoard(bool isWhiteOrientation) {
@@ -92,7 +108,7 @@ class ChessBoard extends PolymerElement {
       for (var j = 0; j < 8; j++) {
         var square = "${alpha[j]}$row";
 
-        html += '<div class="square $squareColor square-$square" ' +
+        html += '<div class="square $squareColor" ' +
             'style="width: ${_squareSize}px; height: ${_squareSize}px" ' + 'id="$square">';
 
         if (showNotation) {
@@ -150,5 +166,78 @@ class ChessBoard extends PolymerElement {
     }
 
     return boardWidth ~/ 8;
+  }
+
+  void _onDragStart(MouseEvent event) {
+    Element piece = event.target;
+    piece.classes.add('moving');
+    _dragSquare = piece.parent;
+    event.dataTransfer.effectAllowed = 'move';
+  }
+
+  void _onDragEnd(MouseEvent event) {
+    var squares = _boardEl.querySelectorAll('.piece');
+    for (var square in squares) {
+      square.classes.remove('over');
+    }
+  }
+
+  void _onDragEnter(MouseEvent event) {
+    Element dropTarget = _getSquareElement(event);
+    if (_getValidMove(_dragSquare, dropTarget) != null) {
+      print('_onDragEnter valid move');
+      event.dataTransfer.effectAllowed = 'move';
+      dropTarget.classes.add('over');
+    } else {
+      print('_onDragEnter non-valid move');
+      event.dataTransfer.effectAllowed = 'none';
+    }
+  }
+
+  void _onDragOver(MouseEvent event) {
+    // This is necessary to allow us to drop.
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }
+
+  void _onDragLeave(MouseEvent event) {
+    Element dropTarget = _getSquareElement(event);
+    dropTarget.classes.remove('over');
+  }
+
+  void _onDrop(MouseEvent event) {
+    // Stop the browser from redirecting.
+    event.stopPropagation();
+
+    // Don't do anything if dropping onto the same column we're dragging.
+    Element dropTarget = _getSquareElement(event);
+    dropTarget.classes.remove('over');
+    var move = _getValidMove(_dragSquare, dropTarget);
+    if (move != null) {
+      _currentPosition.move(move);
+      _moves = _currentPosition.moves({
+        'verbose': true
+      });
+      _drawPositionInstant();
+    }
+  }
+
+  Element _getSquareElement(MouseEvent event) {
+    Element target = event.target;
+    if (target.classes.contains('piece')) {
+      return target.parent;
+    }
+    return target;
+  }
+
+  dynamic _getValidMove(Element fromSquare, Element toSquare) {
+    String from = fromSquare.id;
+    String to = toSquare.id;
+    for (var move in _moves) {
+      if (move['from'] == from && move['to'] == to) {
+        return move;
+      }
+    }
+    return null;
   }
 }
