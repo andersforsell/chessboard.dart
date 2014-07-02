@@ -19,6 +19,8 @@ class ChessBoard extends PolymerElement {
 
   Element _boardEl;
 
+  Element _dragPiece;
+
   Element _dragSquare;
 
   int _squareSize;
@@ -57,7 +59,20 @@ class ChessBoard extends PolymerElement {
     _boardEl.setInnerHtml(_buildBoard(orientation == 'white'), validator:
         _htmlValidator);
 
+    _addDragDropListeners();
+
     _drawPositionInstant();
+  }
+
+  void _addDragDropListeners() {
+    for (var square in _boardEl.querySelectorAll('.square')) {
+      square
+          ..onDragEnd.listen(_onDragEnd)
+          ..onDragEnter.listen(_onDragEnter)
+          ..onDragOver.listen(_onDragOver)
+          ..onDragLeave.listen(_onDragLeave)
+          ..onDrop.listen(_onDrop);
+    }
   }
 
   final _htmlValidator = new NodeValidatorBuilder.common()
@@ -71,7 +86,6 @@ class ChessBoard extends PolymerElement {
         var square = "$col$row";
         var piece = _currentPosition.get(square);
         var squareElement = _boardEl.querySelector('#$square');
-        addDragDropEvents(squareElement);
         var pieceElement = squareElement.querySelector('.piece');
         if (pieceElement != null) pieceElement.remove();
         if (piece != null) {
@@ -84,15 +98,6 @@ class ChessBoard extends PolymerElement {
         }
       }
     }
-  }
-
-  void addDragDropEvents(Element element) {
-    element
-        ..onDragEnd.listen(_onDragEnd)
-        ..onDragEnter.listen(_onDragEnter)
-        ..onDragOver.listen(_onDragOver)
-        ..onDragLeave.listen(_onDragLeave)
-        ..onDrop.listen(_onDrop);
   }
 
   String _buildBoard(bool isWhiteOrientation) {
@@ -169,14 +174,15 @@ class ChessBoard extends PolymerElement {
   }
 
   void _onDragStart(MouseEvent event) {
-    Element piece = event.target;
-    piece.classes.add('moving');
-    _dragSquare = piece.parent;
+    _dragPiece = event.target;
+    _dragPiece.classes.add('moving');
+    _dragSquare = _dragPiece.parent;
     event.dataTransfer.effectAllowed = 'move';
   }
 
   void _onDragEnd(MouseEvent event) {
-    var squares = _boardEl.querySelectorAll('.piece');
+    _dragPiece.classes.remove('moving');
+    var squares = _boardEl.querySelectorAll('.square');
     for (var square in squares) {
       square.classes.remove('over');
     }
@@ -185,11 +191,9 @@ class ChessBoard extends PolymerElement {
   void _onDragEnter(MouseEvent event) {
     Element dropTarget = _getSquareElement(event);
     if (_getValidMove(_dragSquare, dropTarget) != null) {
-      print('_onDragEnter valid move');
       event.dataTransfer.effectAllowed = 'move';
       dropTarget.classes.add('over');
     } else {
-      print('_onDragEnter non-valid move');
       event.dataTransfer.effectAllowed = 'none';
     }
   }
