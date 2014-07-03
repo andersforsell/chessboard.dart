@@ -2,12 +2,14 @@ chessboard.dart
 ===============
 
 chessboard.dart is a Polymer element (web component) that provides an easy way
-to include a chess board in a web application.
+to include a chessboard in a web application.
 
 It is derived from chessboard.js but not a straight port.
 A major difference is that it uses the emerging web components standard via the Dart version of Polymer.
 Also, it utilizes the chess.dart library for legal chess move generation, 
 maintenance of chess game state, and conversion to and from the formats FEN and PGN.
+
+Polymer paper elements are used to display the pawn promotion dialog.
 
 ## Documentation
 
