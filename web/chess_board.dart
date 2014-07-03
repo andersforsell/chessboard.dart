@@ -1,6 +1,19 @@
+library chessboard;
+
+/* Copyright (c) 2014, Anders Forsell (aforsell1971@gmail.com)
+ * Released under the MIT license
+ * https://github.com/andersforsell/chessboard.dart/blob/master/LICENSE
+ *
+ * Based on chessboard.js
+ * Copyright 2013 Chris Oakman
+ * Released under the MIT license
+ * https://github.com/oakmac/chessboardjs/blob/master/LICENSE
+ */
+
+import 'dart:html';
 import 'package:polymer/polymer.dart';
 import 'package:chess/chess.dart';
-import 'dart:html';
+import 'package:paper_elements/paper_dialog.dart';
 
 /**
  * A Polymer chessboard element.
@@ -23,6 +36,11 @@ class ChessBoard extends PolymerElement {
 
   Element _dragSquare;
 
+  // Pawn promotion square
+  Element _promotionSquare;
+
+  PaperDialog _promotionDlg;
+
   int _squareSize;
 
   Chess _currentPosition;
@@ -42,6 +60,17 @@ class ChessBoard extends PolymerElement {
 
     // Set the size and draw the board
     _resize();
+
+    _setPromotionDialogAttributes();
+  }
+
+  void _setPromotionDialogAttributes() {
+    for (Element button in shadowRoot.querySelector('#white_promo').children) {
+      button.setAttribute('iconSrc', _buildPieceImgSrc(button.id));
+    }
+    for (Element button in shadowRoot.querySelector('#black_promo').children) {
+      button.setAttribute('iconSrc', _buildPieceImgSrc(button.id));
+    }
   }
 
   void _resize() {
@@ -56,8 +85,7 @@ class ChessBoard extends PolymerElement {
   }
 
   void _drawBoard() {
-    _boardEl.setInnerHtml(_buildBoard(orientation == 'white'), validator:
-        _htmlValidator);
+    _buildBoard(_boardEl, orientation == 'white');
 
     _addDragDropListeners();
 
@@ -74,10 +102,6 @@ class ChessBoard extends PolymerElement {
           ..onDrop.listen(_onDrop);
     }
   }
-
-  final _htmlValidator = new NodeValidatorBuilder.common()
-      ..allowElement('div', attributes: ['style'])
-      ..allowElement('img', attributes: ['style']);
 
   void _drawPositionInstant() {
     // Draw board pieces
@@ -100,40 +124,42 @@ class ChessBoard extends PolymerElement {
     }
   }
 
-  String _buildBoard(bool isWhiteOrientation) {
-    var html = '';
-
+  void _buildBoard(Element container, bool isWhiteOrientation) {
     // algebraic notation / orientation
     var alpha = isWhiteOrientation ? COLUMNS : COLUMNS.reversed;
     var row = isWhiteOrientation ? 8 : 1;
 
     var squareColor = 'white';
     for (var i = 0; i < 8; i++) {
-      html += '<div class="row">';
+      var rowElement = new DivElement()..className = 'row';
+      container.children.add(rowElement);
       for (var j = 0; j < 8; j++) {
-        var square = "${alpha[j]}$row";
-
-        html += '<div class="square $squareColor" ' +
-            'style="width: ${_squareSize}px; height: ${_squareSize}px" ' + 'id="$square">';
-
+        var squareElement = new DivElement()
+            ..id = '${alpha[j]}$row'
+            ..className = 'square $squareColor'
+            ..style.width = '${_squareSize}px'
+            ..style.height = '${_squareSize}px';
+        rowElement.children.add(squareElement);
         if (showNotation) {
           // alpha notation
           if ((isWhiteOrientation && row == 1) || (!isWhiteOrientation && row ==
               8)) {
-            html += '<div class="notation alpha">${alpha[j]}</div>';
+            var notationElement = new DivElement()
+                ..className = 'notation alpha'
+                ..text = '${alpha[j]}';
+            squareElement.children.add(notationElement);
           }
-
           // numeric notation
           if (j == 0) {
-            html += '<div class="notation numeric">$row</div>';
+            var notationElement = new DivElement()
+                ..className = 'notation numeric'
+                ..text = '$row';
+            squareElement.children.add(notationElement);
           }
         }
-
-        html += '</div>'; // end .square
-
         squareColor = (squareColor == 'white' ? 'black' : 'white');
       }
-      html += '<div class="clearfix"></div></div>';
+      rowElement.children.add(new DivElement()..className = 'clearfix');
 
       squareColor = (squareColor == 'white' ? 'black' : 'white');
 
@@ -143,8 +169,6 @@ class ChessBoard extends PolymerElement {
         row++;
       }
     }
-
-    return html;
   }
 
   String _buildPieceImgSrc(String piece) {
@@ -190,7 +214,7 @@ class ChessBoard extends PolymerElement {
 
   void _onDragEnter(MouseEvent event) {
     Element dropTarget = _getSquareElement(event);
-    if (_getValidMove(_dragSquare, dropTarget) != null) {
+    if (_getValidMoves(_dragSquare, dropTarget).isNotEmpty) {
       event.dataTransfer.effectAllowed = 'move';
       dropTarget.classes.add('over');
     } else {
@@ -216,12 +240,15 @@ class ChessBoard extends PolymerElement {
     // Don't do anything if dropping onto the same column we're dragging.
     Element dropTarget = _getSquareElement(event);
     dropTarget.classes.remove('over');
-    var move = _getValidMove(_dragSquare, dropTarget);
-    if (move != null) {
-      _currentPosition.move(move);
-      _moves = _currentPosition.moves({
-        'verbose': true
-      });
+    var moves = _getValidMoves(_dragSquare, dropTarget);
+    if (moves.length > 1) {
+      // Pawn promotion
+      _promotionDlg = _boardEl.querySelector('#white_promo');
+      _promotionDlg.opened = true;
+      _promotionSquare = dropTarget;
+    } else if (moves.length == 1) {
+      _currentPosition.move(moves[0]);
+      _moves = _currentPosition.moves({'verbose': true});
       _drawPositionInstant();
     }
   }
@@ -234,14 +261,32 @@ class ChessBoard extends PolymerElement {
     return target;
   }
 
-  dynamic _getValidMove(Element fromSquare, Element toSquare) {
+  /**
+   * Returns a list of valid moves between two squares, or an empty list
+   * if there is no valid move. More than one is returned for pawn promotion.
+   */
+  List _getValidMoves(Element fromSquare, Element toSquare) {
+    List moves = [];
     String from = fromSquare.id;
     String to = toSquare.id;
     for (var move in _moves) {
       if (move['from'] == from && move['to'] == to) {
-        return move;
+        moves.add(move);
       }
     }
-    return null;
+    return moves;
+  }
+
+  void promotionClicked(Event event, var detail, Node target) {
+    if (target != null) {
+      String pieceStr = (target as Element).id;
+      var move ={'from': "${_dragSquare.id}", 'to' : "${_promotionSquare.id}",
+                 'promotion': "${pieceStr.substring(1).toLowerCase()}"};
+      _currentPosition.move(move);
+      _moves = _currentPosition.moves({'verbose': true});
+      _drawPositionInstant();
+      _promotionSquare = null;
+      _promotionDlg.opened = false;
+    }
   }
 }

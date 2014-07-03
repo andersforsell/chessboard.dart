@@ -1,4 +1,11 @@
 <link rel="import" href="packages/polymer/polymer.html">
+
+<!-- import the paper button -->
+<link rel="import" href="packages/paper_elements/paper_button.html">
+
+<!-- import the paper dialog -->
+<link rel="import" href="packages/paper_elements/paper_dialog.html">
+
 <polymer-element name="chess-board" attributes="position orientation showNotation">
   <template>
     <style>
@@ -74,7 +81,21 @@
         opacity: 0.25;
       }
     </style>
-    <div class="board"></div>
+    <div class="board">
+      <paper-dialog id='white_promo'>
+        <paper-button id='wQ' on-click="{{promotionClicked}}"></paper-button>
+        <paper-button id='wR' on-click="{{promotionClicked}}"></paper-button>
+        <paper-button id='wN' on-click="{{promotionClicked}}"></paper-button>
+        <paper-button id='wB' on-click="{{promotionClicked}}"></paper-button>
+      </paper-dialog>
+      <paper-dialog id='black_promo'>
+        <paper-button id='bQ' on-click="{{promotionClicked}}"></paper-button>
+        <paper-button id='bR' on-click="{{promotionClicked}}"></paper-button>
+        <paper-button id='bN' on-click="{{promotionClicked}}"></paper-button>
+        <paper-button id='bB' on-click="{{promotionClicked}}"></paper-button>
+      </paper-dialog>
+    </div>
+
   </template>
   <script type="application/dart" src="chess_board.dart"></script>
 </polymer-element>
