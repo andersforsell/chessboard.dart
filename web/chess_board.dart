@@ -28,6 +28,8 @@ class ChessBoard extends PolymerElement {
 
   @published String pieceTheme = 'img/chesspieces/wikipedia/{piece}.png';
 
+  @observable String gameStatus = '';
+
   @observable int squareSize = 0;
 
   static final COLUMNS = 'abcdefgh'.split('');
@@ -38,14 +40,14 @@ class ChessBoard extends PolymerElement {
 
   Element _dragSquare;
 
-  // Pawn promotion square
-  Element _promotionSquare;
+  // Pawn promotion moves
+  List<Move> _promotionMoves;
 
   PaperDialog _promotionDlg;
 
   Chess _currentPosition;
 
-  List _moves;
+  List<Move> _moves;
 
   ChessBoard.created() : super.created();
 
@@ -53,7 +55,7 @@ class ChessBoard extends PolymerElement {
   void domReady() {
     _currentPosition = new Chess.fromFEN(position);
     _moves = _currentPosition.moves({
-      'verbose': true
+      'asObjects': true
     });
 
     _boardEl = shadowRoot.querySelector('.board');
@@ -87,7 +89,7 @@ class ChessBoard extends PolymerElement {
   void _drawBoard() {
     _addDragDropListeners();
 
-   _drawPositionInstant();
+    _drawPositionInstant();
   }
 
   void _addDragDropListeners() {
@@ -196,13 +198,9 @@ class ChessBoard extends PolymerElement {
       // Pawn promotion
       _promotionDlg = _boardEl.querySelector('#white_promo');
       _promotionDlg.opened = true;
-      _promotionSquare = dropTarget;
+      _promotionMoves = moves;
     } else if (moves.length == 1) {
-      _currentPosition.move(moves[0]);
-      _moves = _currentPosition.moves({
-        'verbose': true
-      });
-      _drawPositionInstant();
+      _movePiece(moves[0]);
     }
   }
 
@@ -215,15 +213,15 @@ class ChessBoard extends PolymerElement {
   }
 
   /**
-   * Returns a list of valid moves between two squares, or an empty list
-   * if there is no valid move. More than one is returned for pawn promotion.
+   * Returns a list of valid moves between [fromSquare] and [toSquare].
+   * More than one is returned for pawn promotion.
    */
-  List _getValidMoves(Element fromSquare, Element toSquare) {
-    List moves = [];
-    String from = fromSquare.id;
-    String to = toSquare.id;
+  List<Move> _getValidMoves(Element fromSquare, Element toSquare) {
+    var moves = [];
+    var from = fromSquare.id;
+    var to = toSquare.id;
     for (var move in _moves) {
-      if (move['from'] == from && move['to'] == to) {
+      if (move.fromAlgebraic == from && move.toAlgebraic == to) {
         moves.add(move);
       }
     }
@@ -232,19 +230,46 @@ class ChessBoard extends PolymerElement {
 
   void promotionClicked(Event event, var detail, Node target) {
     if (target != null) {
-      String pieceStr = (target as Element).id;
-      var move = {
-        'from': "${_dragSquare.id}",
-        'to': "${_promotionSquare.id}",
-        'promotion': "${pieceStr.substring(1).toLowerCase()}"
-      };
-      _currentPosition.move(move);
-      _moves = _currentPosition.moves({
-        'verbose': true
-      });
-      _drawPositionInstant();
-      _promotionSquare = null;
-      _promotionDlg.opened = false;
+      String promotionPiece = (target as Element).id.substring(1).toLowerCase();
+      for (var move in _promotionMoves) {
+        if (move.promotion.name == promotionPiece) {
+          _movePiece(move);
+          _promotionMoves = null;
+          _promotionDlg.opened = false;
+          return;
+        }
+      }
+    }
+  }
+
+  void _movePiece(Move move) {
+    _currentPosition.move(move);
+    _moves = _currentPosition.moves({
+      'asObjects': true
+    });
+
+    _drawPositionInstant();
+
+     dispatchEvent(new CustomEvent('move'));
+
+    _updateGameStatus();
+  }
+
+  void _updateGameStatus() {
+    if (_currentPosition.in_checkmate) {
+      gameStatus = 'checkmate';
+    } else if (_currentPosition.in_stalemate) {
+      gameStatus = 'stalemate';
+    } else if (_currentPosition.in_threefold_repetition) {
+      gameStatus = 'threefoldrepetition';
+    } else if (_currentPosition.insufficient_material) {
+      gameStatus = 'insufficientmaterial';
+    } else if (_currentPosition.in_draw) {
+      gameStatus = 'draw';
+    } else if (_currentPosition.in_check) {
+      gameStatus = 'check';
+    } else {
+      gameStatus = '';
     }
   }
 }
