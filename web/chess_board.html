@@ -6,7 +6,7 @@
 <!-- import the paper dialog -->
 <link rel="import" href="packages/paper_elements/paper_dialog.html">
 
-<polymer-element name="chess-board" attributes="position orientation showNotation">
+<polymer-element name="chess-board" attributes="position reversed showNotation pieceTheme">
   <template>
     <style>
      :host { display: block; }
@@ -82,6 +82,7 @@
       }
     </style>
     <div class="board">
+      <!-- Promotion dialogs -->
       <paper-dialog id='white_promo'>
         <paper-button id='wQ' on-click="{{promotionClicked}}"></paper-button>
         <paper-button id='wR' on-click="{{promotionClicked}}"></paper-button>
@@ -94,8 +95,23 @@
         <paper-button id='bN' on-click="{{promotionClicked}}"></paper-button>
         <paper-button id='bB' on-click="{{promotionClicked}}"></paper-button>
       </paper-dialog>
+      <!-- Board squares -->
+      <template repeat="{{row in (reversed  ? [1,2,3,4,5,6,7,8] : [8,7,6,5,4,3,2,1])}}">
+        <div class="row">
+          <template repeat="{{col in ['a', 'b','c','d','e','f','g','h'] | enumerate)}}">
+            <div id="{{col.value}}{{row}}" class="square {{((row % 2) == (col.index % 2)) ? 'white' : 'black'}}" style="width:{{squareSize}}px;height:{{squareSize}}px" >
+              <template if="{{showNotation && col.index == 0}}">
+                <div class="notation numeric">{{row}}</div>
+              </template>
+              <template if="{{showNotation && row == (reversed ? 8 : 1)}}">
+                <div class="notation alpha">{{col.value}}</div>
+              </template>
+            </div>
+          </template>
+          <div class="clearfix"></div>
+        </div>
+      </template>
     </div>
-
   </template>
   <script type="application/dart" src="chess_board.dart"></script>
 </polymer-element>
