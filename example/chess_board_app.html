@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+
+<!-- import Polymer -->
+<link rel="import" href="../../packages/polymer/polymer.html">
+
+<!-- import core elements -->
+<link rel="import" href="../../packages/core_elements/core_item.html">
+
+<!-- import the chess-board -->
+<link rel="import" href="../../packages/chessboard/chess_board.html">
+
+<polymer-element name="chess-board-app">
+  <template>
+    <style>
+     :host {
+        width: 100%;
+        height: 100%;
+      }
+      body {
+        background-color: #F8F8F8;
+        font-family: 'Open Sans', sans-serif;
+        font-size: 14px;
+        font-weight: normal;
+        line-height: 1.2em;
+        margin: 15px;
+      }
+
+      h1, p {
+        color: #333;
+      }
+    </style>
+    <chess-board id='chess_board' style='width: 500px'>
+    </chess-board>
+    <core-item label="{{$['chess_board'].gameStatus}}"></core-item>
+    <core-item label="{{$['chess_board'].turn}} to move"></core-item>
+    <div class="pgn">{{$['chess_board'].pgn}}</div>
+  </template>
+  <script type="application/dart" src="chess_board_app.dart"></script>
+</polymer-element>
+
