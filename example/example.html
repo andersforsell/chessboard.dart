@@ -4,17 +4,21 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Sample chessboard app</title>
+
+    <!-- Setup Web Components -->
     <script src="packages/web_components/platform.js"></script>
     <script src="packages/web_components/dart_support.js"></script>
 
+    <!-- Import the styles -->
+    <link rel="stylesheet" href="example.css">
+
     <!-- import the chess-board -->
-    <link rel="import" href="chess_board.html">
+    <link rel="import" href="packages/chessboard/chess_board.html">
 
+    <!-- Start the application -->
     <script type="application/dart">export 'package:polymer/init.dart';</script>
-    <script src="packages/browser/dart.js"></script>
-
-    <link rel="stylesheet" href="test.css">
   </head>
   <body>
     <h1>chessboard.dart</h1>

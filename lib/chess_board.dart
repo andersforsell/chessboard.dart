@@ -26,15 +26,19 @@ class ChessBoard extends PolymerElement {
 
   @published bool showNotation = true;
 
-  @published String pieceTheme = 'img/chesspieces/wikipedia/{piece}.png';
+  @published String pieceTheme = 'packages/chessboard/img/{piece}.png';
 
   @observable String gameStatus = '';
+
+  @observable String turn;
+
+  @observable String pgn;
 
   @observable int squareSize = 0;
 
   static final COLUMNS = 'abcdefgh'.split('');
 
-  Element _boardEl;
+  Element _boardElement;
 
   Element _dragPiece;
 
@@ -47,18 +51,17 @@ class ChessBoard extends PolymerElement {
 
   Chess _currentPosition;
 
-  List<Move> _moves;
+  List<Move> _legalMoves;
 
   ChessBoard.created() : super.created();
 
   @override
   void domReady() {
-    _currentPosition = new Chess.fromFEN(position);
-    _moves = _currentPosition.moves({
-      'asObjects': true
-    });
+    _boardElement = shadowRoot.querySelector('.board');
 
-    _boardEl = shadowRoot.querySelector('.board');
+    _currentPosition = new Chess.fromFEN(position);
+
+    _updateGameState();
 
     // Set the size and draw the board
     _resize();
@@ -80,7 +83,7 @@ class ChessBoard extends PolymerElement {
     squareSize = _calculateSquareSize(clientWidth);
 
     // Set board width
-    _boardEl.style.width = '${squareSize * 8}px';
+    _boardElement.style.width = '${squareSize * 8}px';
 
     // Redraw the board
     _drawBoard();
@@ -93,7 +96,7 @@ class ChessBoard extends PolymerElement {
   }
 
   void _addDragDropListeners() {
-    for (var square in _boardEl.querySelectorAll('.square')) {
+    for (var square in _boardElement.querySelectorAll('.square')) {
       square
           ..onDragEnd.listen(_onDragEnd)
           ..onDragEnter.listen(_onDragEnter)
@@ -109,7 +112,7 @@ class ChessBoard extends PolymerElement {
       for (var col in COLUMNS) {
         var square = "$col$row";
         var piece = _currentPosition.get(square);
-        var squareElement = _boardEl.querySelector('#$square');
+        var squareElement = _boardElement.querySelector('#$square');
         var pieceElement = squareElement.querySelector('.piece');
         if (pieceElement != null) pieceElement.remove();
         if (piece != null) {
@@ -159,7 +162,7 @@ class ChessBoard extends PolymerElement {
 
   void _onDragEnd(MouseEvent event) {
     _dragPiece.classes.remove('moving');
-    var squares = _boardEl.querySelectorAll('.square');
+    var squares = _boardElement.querySelectorAll('.square');
     for (var square in squares) {
       square.classes.remove('over');
     }
@@ -196,7 +199,7 @@ class ChessBoard extends PolymerElement {
     var moves = _getValidMoves(_dragSquare, dropTarget);
     if (moves.length > 1) {
       // Pawn promotion
-      _promotionDlg = _boardEl.querySelector('#white_promo');
+      _promotionDlg = _boardElement.querySelector('#white_promo');
       _promotionDlg.opened = true;
       _promotionMoves = moves;
     } else if (moves.length == 1) {
@@ -220,7 +223,7 @@ class ChessBoard extends PolymerElement {
     var moves = [];
     var from = fromSquare.id;
     var to = toSquare.id;
-    for (var move in _moves) {
+    for (var move in _legalMoves) {
       if (move.fromAlgebraic == from && move.toAlgebraic == to) {
         moves.add(move);
       }
@@ -244,18 +247,23 @@ class ChessBoard extends PolymerElement {
 
   void _movePiece(Move move) {
     _currentPosition.move(move);
-    _moves = _currentPosition.moves({
-      'asObjects': true
-    });
+
+    _updateGameState();
 
     _drawPositionInstant();
 
      dispatchEvent(new CustomEvent('move'));
-
-    _updateGameStatus();
   }
 
-  void _updateGameStatus() {
+  void _updateGameState() {
+    _legalMoves = _currentPosition.moves({
+          'asObjects': true
+        });
+
+    turn = _currentPosition.turn.value == 0 ? 'White' : 'Black';
+
+    pgn = _currentPosition.pgn();
+
     if (_currentPosition.in_checkmate) {
       gameStatus = 'checkmate';
     } else if (_currentPosition.in_stalemate) {
