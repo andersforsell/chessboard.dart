@@ -32,7 +32,7 @@ class ChessBoard extends PolymerElement {
 
   @observable String turn;
 
-  @observable String pgn;
+  @observable List<String> pgn;
 
   @observable int squareSize = 0;
 
@@ -57,7 +57,7 @@ class ChessBoard extends PolymerElement {
 
   @override
   void domReady() {
-    _boardElement = shadowRoot.querySelector('.board');
+    _boardElement = $['board'];
 
     _currentPosition = new Chess.fromFEN(position);
 
@@ -66,14 +66,18 @@ class ChessBoard extends PolymerElement {
     // Set the size and draw the board
     _resize();
 
+    window.onResize.listen((e) {
+      _resize();
+    });
+
     _setPromotionDialogAttributes();
   }
 
   void _setPromotionDialogAttributes() {
-    for (Element button in shadowRoot.querySelector('#white_promo').children) {
+    for (Element button in $['white_promo'].children) {
       button.setAttribute('iconSrc', _buildPieceImgSrc(button.id));
     }
-    for (Element button in shadowRoot.querySelector('#black_promo').children) {
+    for (Element button in $['black_promo'].children) {
       button.setAttribute('iconSrc', _buildPieceImgSrc(button.id));
     }
   }
@@ -252,17 +256,21 @@ class ChessBoard extends PolymerElement {
 
     _drawPositionInstant();
 
-     dispatchEvent(new CustomEvent('move'));
+    dispatchEvent(new CustomEvent('move'));
   }
 
   void _updateGameState() {
     _legalMoves = _currentPosition.moves({
-          'asObjects': true
-        });
+      'asObjects': true
+    });
 
     turn = _currentPosition.turn.value == 0 ? 'White' : 'Black';
 
-    pgn = _currentPosition.pgn();
+    var pgnStr = _currentPosition.pgn({
+      'max_width': 2,
+      'newline_char': '@@'
+    });
+    pgn = pgnStr.split('@@');
 
     if (_currentPosition.in_checkmate) {
       gameStatus = 'checkmate';

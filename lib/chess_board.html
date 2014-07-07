@@ -12,15 +12,13 @@
 <polymer-element name="chess-board" attributes="position reversed showNotation pieceTheme">
   <template>
     <style>
-     :host { display: block; }
-
-      /* clearfix */
-      .clearfix {
-        clear: both;
-      }
+     :host {
+      display: block;
+       width: 100%;
+     }
 
       /* board */
-      .board {
+      #board {
         border: 2px solid #404040;
         -moz-box-sizing: content-box;
         box-sizing: content-box;
@@ -83,8 +81,11 @@
       .piece.moving {
         opacity: 0.25;
       }
+      .clearfix {
+        clear: both;
+      }
     </style>
-    <div class="board">
+    <div id="board">
       <!-- Promotion dialogs -->
       <paper-dialog id='white_promo'>
         <paper-button id='wQ' on-click="{{promotionClicked}}"></paper-button>
