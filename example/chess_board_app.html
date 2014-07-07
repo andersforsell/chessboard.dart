@@ -51,35 +51,33 @@
       }
     }
     </style>
-    <body fullbleed unresolved>
-      <core-drawer-panel id="drawerPanel" class="right-drawer">
-        <core-header-panel drawer>
-          <core-toolbar id="navheader">
-          </core-toolbar>
-          <div class="moves">
-            <template repeat="{{ pgnMove in $['chess_board'].pgn }}">
-              {{pgnMove}}<br/>
-            </template>
-          </div>
-        </core-header-panel>
-        <core-header-panel main>
-          <core-toolbar id="mainheader">
-            <span flex>Chessboard App</span>
-            <paper-icon-button id="load_fen" icon=file-download on-click="{{loadGameClicked}}"></paper-icon-button>
-            <paper-icon-button id="navicon" icon="menu"></paper-icon-button>
-          </core-toolbar>
-          <div class="content">
-            <chess-board id='chess_board' on-move='{{onMove}}'></chess-board>
-            <core-item id="turn" label="{{$['chess_board'].turn}} to move"></core-item>
-            <core-item id="gameStatus" label="{{$['chess_board'].gameStatus}}"></core-item>
-          </div>
-        </core-header-panel>
-      </core-drawer-panel>
-      <paper-dialog id="loaddlg" heading="Load New Game">
-        <paper-input id="feninput" label="FEN position"></paper-input>
-        <paper-button id="loadgame" icon="done" on-click="{{okClicked}}"></paper-button>
-      </paper-dialog>
-    </body>
+    <core-drawer-panel id="drawerPanel" class="right-drawer">
+      <core-header-panel drawer>
+        <core-toolbar id="navheader">
+        </core-toolbar>
+        <div class="moves">
+          <template repeat="{{ pgnMove in $['chess_board'].pgn }}">
+            {{pgnMove}}<br/>
+          </template>
+        </div>
+      </core-header-panel>
+      <core-header-panel main>
+        <core-toolbar id="mainheader">
+          <span flex>Chessboard App</span>
+          <paper-icon-button id="load_fen" icon=file-download on-click="{{loadGameClicked}}"></paper-icon-button>
+          <paper-icon-button id="navicon" icon="menu"></paper-icon-button>
+        </core-toolbar>
+        <div class="content">
+          <chess-board id='chess_board' on-move='{{onMove}}'></chess-board>
+          <core-item id="turn" label="{{$['chess_board'].turn}} to move"></core-item>
+          <core-item id="gameStatus" label="{{$['chess_board'].gameStatus}}"></core-item>
+        </div>
+      </core-header-panel>
+    </core-drawer-panel>
+    <paper-dialog id="loaddlg" heading="Load New Game">
+      <paper-input id="feninput" label="FEN position"></paper-input>
+      <paper-button id="loadgame" icon="done" on-click="{{okClicked}}"></paper-button>
+    </paper-dialog>
   </template>
   <script type="application/dart" src="chess_board_app.dart"></script>
 </polymer-element>
