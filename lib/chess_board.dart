@@ -73,6 +73,12 @@ class ChessBoard extends PolymerElement {
     _setPromotionDialogAttributes();
   }
 
+  void positionChanged(String oldValue){
+    _currentPosition = new Chess.fromFEN(position);
+    _updateGameState();
+    _drawBoard();
+  }
+
   void _setPromotionDialogAttributes() {
     for (Element button in $['white_promo'].children) {
       button.setAttribute('iconSrc', _buildPieceImgSrc(button.id));
