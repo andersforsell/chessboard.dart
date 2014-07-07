@@ -106,7 +106,8 @@ class ChessBoard extends PolymerElement {
           ..onDragEnter.listen(_onDragEnter)
           ..onDragOver.listen(_onDragOver)
           ..onDragLeave.listen(_onDragLeave)
-          ..onDrop.listen(_onDrop);
+          ..onDrop.listen(_onDrop)
+          ..onClick.listen(_onClick);
     }
   }
 
@@ -157,11 +158,22 @@ class ChessBoard extends PolymerElement {
     return boardWidth ~/ 8;
   }
 
+  void _onClick(MouseEvent event) {
+    if (_dragPiece == null) {
+      _onDragStart(event);
+    } else {
+      _onDrop(event);
+      _onDragEnd(event);
+    }
+  }
+
   void _onDragStart(MouseEvent event) {
     _dragPiece = event.target;
     _dragPiece.classes.add('moving');
     _dragSquare = _dragPiece.parent;
-    event.dataTransfer.effectAllowed = 'move';
+    if (event.dataTransfer != null) {
+      event.dataTransfer.effectAllowed = 'move';
+    }
   }
 
   void _onDragEnd(MouseEvent event) {
@@ -170,6 +182,7 @@ class ChessBoard extends PolymerElement {
     for (var square in squares) {
       square.classes.remove('over');
     }
+    _dragPiece = null;
   }
 
   void _onDragEnter(MouseEvent event) {
