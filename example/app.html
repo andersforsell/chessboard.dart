@@ -5233,9 +5233,10 @@ polymer-next-selector { content: ':host > *'; }
         </div>
       </core-header-panel>
     </core-drawer-panel>
-    <paper-dialog id="loaddlg" heading="Load New Game">
+    <paper-dialog id="loaddlg" heading="Load Game">
       <paper-input id="feninput" label="FEN position"></paper-input>
-      <paper-button id="loadgame" icon="done" on-click="{{okClicked}}"></paper-button>
+      <paper-button label="Cancel" dismissive=""></paper-button>
+      <paper-button label="OK" affirmative="" default="" on-click="{{okClicked}}"></paper-button>
     </paper-dialog>
   </template>
   
@@ -5245,4 +5246,4 @@ polymer-next-selector { content: ':host > *'; }
     <chess-board-app></chess-board-app>
   
 
-<script type="application/dart" src="app.html_bootstrap.dart"></script><script src="packages/browser/dart.js"></script></body></html>
+<script src="app.html_bootstrap.dart.js" async=""></script></body></html>
