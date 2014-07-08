@@ -102,7 +102,7 @@ class ChessBoard extends PolymerElement {
   void _drawBoard() {
     _addDragDropListeners();
 
-    _drawPositionInstant();
+    _drawChessPosition();
   }
 
   void _addDragDropListeners() {
@@ -117,20 +117,25 @@ class ChessBoard extends PolymerElement {
     }
   }
 
-  void _drawPositionInstant() {
-    // Draw board pieces
+  void _drawChessPosition() {
     for (var row = 1; row <= 8; row++) {
       for (var col in COLUMNS) {
         var square = "$col$row";
         var piece = _currentPosition.get(square);
+        var pieceStr = piece != null ? '${piece.color}${piece.type.toUpperCase()}' : null;
         var squareElement = _boardElement.querySelector('#$square');
         var pieceElement = squareElement.querySelector('.piece');
-        if (pieceElement != null) pieceElement.remove();
-        if (piece != null) {
-          var pieceStr = '${piece.color}${piece.type.toUpperCase()}';
+        if (pieceElement != null) {
+          if (pieceElement.id == pieceStr) {
+            continue;
+          }
+          pieceElement.remove();
+        }
+        if (pieceStr != null) {
           pieceElement = new ImageElement(src: _buildPieceImgSrc(pieceStr),
               width: squareSize, height: squareSize)
               ..className = 'piece'
+              ..id = pieceStr
               ..onDragStart.listen(_onDragStart);
           squareElement.children.add(pieceElement);
         }
@@ -273,7 +278,7 @@ class ChessBoard extends PolymerElement {
 
     _updateGameState();
 
-    _drawPositionInstant();
+    _drawChessPosition();
 
     dispatchEvent(new CustomEvent('move'));
   }
