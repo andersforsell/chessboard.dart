@@ -14,6 +14,7 @@ import 'dart:html';
 import 'package:polymer/polymer.dart';
 import 'package:chess/chess.dart';
 import 'package:paper_elements/paper_dialog.dart';
+import 'package:analyzer/src/generated/java_core.dart';
 
 /**
  * A Polymer chessboard element.
@@ -70,10 +71,12 @@ class ChessBoard extends PolymerElement {
       _resize();
     });
 
+    _addDragDropListeners();
+
     _setPromotionDialogAttributes();
   }
 
-  void positionChanged(String oldValue){
+  void positionChanged(String oldValue) {
     _currentPosition = new Chess.fromFEN(position);
     _updateGameState();
     _drawBoard();
@@ -90,19 +93,14 @@ class ChessBoard extends PolymerElement {
 
   void _resize() {
     // Calculate the new square size
+    int size = Math.min(clientWidth, clientHeight);
     squareSize = _calculateSquareSize(clientWidth);
 
     // Set board width
     _boardElement.style.width = '${squareSize * 8}px';
 
     // Redraw the board
-    _drawBoard();
-  }
-
-  void _drawBoard() {
-    _addDragDropListeners();
-
-    _drawChessPosition();
+    _drawChessPosition(refresh: true);
   }
 
   void _addDragDropListeners() {
@@ -117,15 +115,21 @@ class ChessBoard extends PolymerElement {
     }
   }
 
-  void _drawChessPosition() {
+  void _drawChessPosition({bool refresh: false}) {
     for (var row = 1; row <= 8; row++) {
       for (var col in COLUMNS) {
         var square = "$col$row";
         var piece = _currentPosition.get(square);
-        var pieceStr = piece != null ? '${piece.color}${piece.type.toUpperCase()}' : null;
+        var pieceStr = piece != null ?
+            '${piece.color}${piece.type.toUpperCase()}' : null;
         var squareElement = _boardElement.querySelector('#$square');
         var pieceElement = squareElement.querySelector('.piece');
         if (pieceElement != null) {
+          if (refresh) {
+            pieceElement.style
+                ..height = "${squareSize}px"
+                ..width = "${squareSize}px";
+          }
           if (pieceElement.id == pieceStr) {
             continue;
           }

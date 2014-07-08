@@ -76,7 +76,8 @@
     </core-drawer-panel>
     <paper-dialog id="loaddlg" heading="Load New Game">
       <paper-input id="feninput" label="FEN position"></paper-input>
-      <paper-button id="loadgame" icon="done" on-click="{{okClicked}}"></paper-button>
+      <paper-button label="Cancel" dismissive></paper-button>
+      <paper-button label="OK" affirmative default on-click="{{okClicked}}"></paper-button>
     </paper-dialog>
   </template>
   <script type="application/dart" src="chess_board_app.dart"></script>
