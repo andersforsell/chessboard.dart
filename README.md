@@ -11,8 +11,10 @@ maintenance of chess game state, and conversion to and from the formats FEN and 
 
 Polymer paper elements are used to display the pawn promotion dialog.
 
-## Documentation
+A simple example [Chessboard App](http://andersforsell.github.io/chessboard.dart/example/app.html) is provided.
 
+## Documentation
+TBD
 
 ## Links
 - [chessboard.js](https://github.com/jhlywa/chess.js)
