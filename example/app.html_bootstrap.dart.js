@@ -2946,7 +2946,8 @@ y.fixed$length=init
 y=new L.PU(y,H.VM(new L.Jk(-1,-1),[null]),C.BQ,H.VM(new L.Jk(0,0),[null]),-1,0,1,[],P.Fl(null,null))
 y.cD(0,z)
 a.qN=y
-this.B3(a)},"$1","gn9",2,0,39,54],
+this.B3(a)
+this.IN(a,!0)},"$1","gn9",2,0,39,54],
 RQ:function(a){var z,y,x,w
 for(z=J.GP(J.OG(this.gKM(a).tf.t(0,"white_promo")));z.G();){y=z.gl()
 x=J.RE(y)
