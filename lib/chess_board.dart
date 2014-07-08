@@ -79,7 +79,6 @@ class ChessBoard extends PolymerElement {
   void positionChanged(String oldValue) {
     _currentPosition = new Chess.fromFEN(position);
     _updateGameState();
-    _drawBoard();
   }
 
   void _setPromotionDialogAttributes() {
