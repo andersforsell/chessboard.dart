@@ -14,7 +14,6 @@ import 'dart:html';
 import 'package:polymer/polymer.dart';
 import 'package:chess/chess.dart';
 import 'package:paper_elements/paper_dialog.dart';
-import 'package:analyzer/src/generated/java_core.dart';
 
 /**
  * A Polymer chessboard element.
@@ -65,10 +64,10 @@ class ChessBoard extends PolymerElement {
     _updateGameState();
 
     // Set the size and draw the board
-    _resize();
+    resize();
 
     window.onResize.listen((e) {
-      _resize();
+      resize();
     });
 
     _addDragDropListeners();
@@ -91,13 +90,15 @@ class ChessBoard extends PolymerElement {
     }
   }
 
-  void _resize() {
+
+  void resize() {
     // Calculate the new square size
-    int size = Math.min(clientWidth, clientHeight);
     squareSize = _calculateSquareSize(clientWidth);
 
     // Set board width
     _boardElement.style.width = '${squareSize * 8}px';
+
+
 
     // Redraw the board
     _drawChessPosition(refresh: true);

@@ -4,6 +4,7 @@
  */
 
 import 'dart:html';
+import 'dart:math';
 import 'package:polymer/polymer.dart';
 import 'package:paper_elements/paper_dialog.dart';
 import 'package:paper_elements/paper_input.dart';
@@ -22,8 +23,31 @@ class ChessBoardApp extends PolymerElement {
     var navicon = $['navicon'];
     var drawerPanel = $['drawerPanel'];
 
+    _resize();
+
+    window.onResize.listen((e) {
+      _resize();
+    });
+
     // TODO uncomment when https://github.com/dart-lang/core-elements/issues/39 is fixed
     // navicon.onClick.listen((e) => drawerPanel.togglePanel());
+  }
+
+  void _resize() {
+    var mainHeaderPanel = $['main_header_panel'];
+    var mainToolbar = $['main_toolbar'];
+    var turn = $['turn'];
+    var gameStatus = $['gameStatus'];
+
+    ChessBoard chessBoard = $['chess_board'];
+    var paddingX2 = 20 * 2;
+    int height = mainHeaderPanel.clientHeight - mainToolbar.clientHeight -
+        turn.clientHeight - gameStatus.clientHeight - paddingX2;
+    int width = mainHeaderPanel.clientWidth - paddingX2;
+    chessBoard.style
+        ..width = '${min(height, width)}px'
+        ..height = chessBoard.style.width;
+    chessBoard.resize();
   }
 
 
@@ -38,11 +62,11 @@ class ChessBoardApp extends PolymerElement {
   }
 
   void okClicked(Event event, var detail, Node target) {
-      PaperInput feninput = $['feninput'];
-      ChessBoard chess = $['chess_board'];
-      chess.position = feninput.value;
-      PaperDialog loadGameDlg = $['loaddlg'];
-      loadGameDlg.toggle();
-    }
+    PaperInput feninput = $['feninput'];
+    ChessBoard chess = $['chess_board'];
+    chess.position = feninput.value;
+    PaperDialog loadGameDlg = $['loaddlg'];
+    loadGameDlg.toggle();
+  }
 
 }
