@@ -2,7 +2,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Sample chessboard app</title>
+    <title>Chessboard App</title>
 
     <!-- Setup Web Components -->
     
@@ -5220,8 +5220,8 @@ polymer-next-selector { content: ':host > *'; }
           </template>
         </div>
       </core-header-panel>
-      <core-header-panel main="">
-        <core-toolbar id="mainheader">
+      <core-header-panel id="main_header_panel" main="">
+        <core-toolbar id="main_toolbar">
           <span flex="">Chessboard App</span>
           <paper-icon-button id="load_fen" icon="file-download" on-click="{{loadGameClicked}}"></paper-icon-button>
           <paper-icon-button id="navicon" icon="menu"></paper-icon-button>
