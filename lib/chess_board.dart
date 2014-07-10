@@ -56,7 +56,9 @@ class ChessBoard extends PolymerElement {
   ChessBoard.created() : super.created();
 
   @override
-  void domReady() {
+  void attached() {
+    super.attached();
+
     _boardElement = $['board'];
 
     _currentPosition = new Chess.fromFEN(position);
