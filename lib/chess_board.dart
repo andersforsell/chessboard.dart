@@ -61,9 +61,7 @@ class ChessBoard extends PolymerElement {
 
     _boardElement = $['board'];
 
-    _currentPosition = new Chess.fromFEN(position);
-
-    _updateGameState();
+    positionChanged(position);
 
     // Set the size and draw the board
     resize();
@@ -78,9 +76,14 @@ class ChessBoard extends PolymerElement {
   }
 
   void positionChanged(String oldValue) {
-    _currentPosition = new Chess.fromFEN(position);
+    Map validMap = Chess.validate_fen(position);
+    if (validMap["valid"]) {
+      _currentPosition = new Chess.fromFEN(position);
+    } else {
+      _currentPosition = new Chess();
+      _currentPosition.load_pgn(position);
+    }
     _updateGameState();
-    _drawChessPosition(refresh: true);
   }
 
   void _setPromotionDialogAttributes() {
@@ -92,7 +95,6 @@ class ChessBoard extends PolymerElement {
     }
   }
 
-
   void resize() {
     // Calculate the new square size
     squareSize = _calculateSquareSize(clientWidth);
@@ -100,10 +102,16 @@ class ChessBoard extends PolymerElement {
     // Set board width
     _boardElement.style.width = '${squareSize * 8}px';
 
+    refresh();
+  }
 
-
-    // Redraw the board
+  void refresh() {
     _drawChessPosition(refresh: true);
+  }
+
+  void undo() {
+    _currentPosition.undo();
+    _updateGameState();
   }
 
   void _addDragDropListeners() {

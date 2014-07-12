@@ -6,7 +6,6 @@
 import 'dart:html';
 import 'dart:math';
 import 'package:polymer/polymer.dart';
-import 'package:paper_elements/paper_dialog.dart';
 import 'package:paper_elements/paper_input.dart';
 import 'package:chessboard/chess_board.dart';
 
@@ -50,23 +49,18 @@ class ChessBoardApp extends PolymerElement {
     chessBoard.resize();
   }
 
-
   void onMove(CustomEvent event, detail, target) {
     ChessBoard chess = event.target;
     print('Move event, next turn is ${target.turn}');
   }
 
   void loadGameClicked(Event event, var detail, Node target) {
-    PaperDialog loadGameDlg = $['loaddlg'];
-    loadGameDlg.toggle();
+    $['loaddlg'].toggle();
   }
 
   void okClicked(Event event, var detail, Node target) {
-    PaperInput feninput = $['feninput'];
-    ChessBoard chess = $['chess_board'];
-    chess.position = feninput.value;
-    PaperDialog loadGameDlg = $['loaddlg'];
-    loadGameDlg.toggle();
+    PaperInput posInput = $['pos_input'];
+    ChessBoard chessBoard = $['chess_board']..position = posInput.value;
+    async((num) => chessBoard.refresh());
   }
-
 }
