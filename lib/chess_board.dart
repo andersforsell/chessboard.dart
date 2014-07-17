@@ -30,13 +30,19 @@ class ChessBoard extends PolymerElement {
 
   @observable String gameStatus = '';
 
-  @observable String turn;
+  @observable String turn = WHITE;
+
+  @observable Map<String, String> header;
 
   @observable List<String> pgn;
 
   @observable int squareSize = 0;
 
   static final COLUMNS = 'abcdefgh'.split('');
+
+  static final BLACK = 'Black';
+
+  static final WHITE = 'White';
 
   Element _boardElement;
 
@@ -81,7 +87,7 @@ class ChessBoard extends PolymerElement {
       _currentPosition = new Chess.fromFEN(position);
     } else {
       _currentPosition = new Chess();
-      _currentPosition.load_pgn(position);
+      _currentPosition.load_pgn(position, {'newline_char' : '\n'});
     }
     _updateGameState();
   }
@@ -304,6 +310,8 @@ class ChessBoard extends PolymerElement {
     });
 
     turn = _currentPosition.turn.value == 0 ? 'White' : 'Black';
+
+    header = _currentPosition.header;
 
     var pgnStr = _currentPosition.pgn({
       'max_width': 2,

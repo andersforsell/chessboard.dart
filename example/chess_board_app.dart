@@ -63,4 +63,10 @@ class ChessBoardApp extends PolymerElement {
     ChessBoard chessBoard = $['chess_board']..position = posInput.value;
     async((num) => chessBoard.refresh());
   }
+
+  void undoClicked(Event event, var detail, Node target) {
+    ChessBoard chessBoard = $['chess_board'];
+    chessBoard.undo();
+    async((num) => chessBoard.refresh());
+  }
 }
