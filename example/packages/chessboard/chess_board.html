@@ -10,10 +10,10 @@
 <polymer-element name="chess-board" attributes="position reversed showNotation pieceTheme">
   <template>
     <style>
-     :host {
-      display: block;
-       width: 100%;
-     }
+      :host {
+        display: block;
+        width: 100%;
+      }
 
       /* board */
       #board {
@@ -81,6 +81,10 @@
       }
       .clearfix {
         clear: both;
+      }
+      .piece:hover {
+        -webkit-filter: drop-shadow( 2px 2px 2px #333 );
+        filter: drop-shadow( 2px 2px 2px #333 );
       }
     </style>
     <div id="board">

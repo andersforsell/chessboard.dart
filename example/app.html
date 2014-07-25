@@ -4,6 +4,9 @@
 
     <title>Chessboard App</title>
 
+    <!-- Add Roboto font -->
+    
+
     <!-- Setup Web Components -->
     
     
@@ -14,7 +17,7 @@
     <!-- Start the application -->
     
   </head>
-  <body fullbleed="" unresolved=""><script src="packages/web_components/platform.js"></script><script src="packages/web_components/dart_support.js"></script>
+  <body fullbleed="" unresolved=""><link href="http://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" type="text/css"><script src="packages/web_components/platform.js"></script><script src="packages/web_components/dart_support.js"></script>
 
 <!-- import core elements -->
 
@@ -5067,10 +5070,10 @@ polymer-next-selector { content: ':host > *'; }
 <polymer-element name="chess-board" attributes="position reversed showNotation pieceTheme">
   <template>
     <style>
-     :host {
-      display: block;
-       width: 100%;
-     }
+      :host {
+        display: block;
+        width: 100%;
+      }
 
       /* board */
       #board {
@@ -5139,6 +5142,10 @@ polymer-next-selector { content: ':host > *'; }
       .clearfix {
         clear: both;
       }
+      .piece:hover {
+        -webkit-filter: drop-shadow( 2px 2px 2px #333 );
+        filter: drop-shadow( 2px 2px 2px #333 );
+      }
     </style>
     <div id="board">
       <!-- Promotion dialogs -->
@@ -5181,7 +5188,7 @@ polymer-next-selector { content: ':host > *'; }
      :host {
         width: 100%;
         height: 100%;
-        font-family: "RobotoDraft",Helvetica,Arial,sans-serif;
+        font-family: "Roboto",Helvetica,Arial,sans-serif;
         font-size: 16px;
       }
       core-header-panel {
@@ -5223,7 +5230,8 @@ polymer-next-selector { content: ':host > *'; }
       <core-header-panel id="main_header_panel" main="">
         <core-toolbar id="main_toolbar">
           <span flex="">Chessboard App</span>
-          <paper-icon-button id="load_fen" icon="file-download" on-click="{{loadGameClicked}}"></paper-icon-button>
+          <paper-icon-button id="undo_move" icon="undo" on-click="{{undoClicked}}"></paper-icon-button>
+          <paper-icon-button id="load_game" icon="file-download" on-click="{{loadGameClicked}}"></paper-icon-button>
           <paper-icon-button id="navicon" icon="menu"></paper-icon-button>
         </core-toolbar>
         <div class="content">
@@ -5233,10 +5241,10 @@ polymer-next-selector { content: ':host > *'; }
         </div>
       </core-header-panel>
     </core-drawer-panel>
-    <paper-dialog id="loaddlg" heading="Load Game">
-      <paper-input id="feninput" label="FEN position"></paper-input>
+    <paper-dialog id="loaddlg" style="width:80%" heading="Load Game">
+      <paper-input id="pos_input" multiline="" style="width:100%" label="FEN or PGN"></paper-input>
       <paper-button label="Cancel" dismissive=""></paper-button>
-      <paper-button label="OK" affirmative="" default="" on-click="{{okClicked}}"></paper-button>
+      <paper-button label="OK" affirmative="" autofocus="" on-click="{{okClicked}}"></paper-button>
     </paper-dialog>
   </template>
   

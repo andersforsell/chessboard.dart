@@ -22,7 +22,7 @@
      :host {
         width: 100%;
         height: 100%;
-        font-family: "RobotoDraft",Helvetica,Arial,sans-serif;
+        font-family: "Roboto",Helvetica,Arial,sans-serif;
         font-size: 16px;
       }
       core-header-panel {
@@ -64,7 +64,8 @@
       <core-header-panel id="main_header_panel" main>
         <core-toolbar id="main_toolbar">
           <span flex>Chessboard App</span>
-          <paper-icon-button id="load_fen" icon=file-download on-click="{{loadGameClicked}}"></paper-icon-button>
+          <paper-icon-button id="undo_move" icon=undo on-click="{{undoClicked}}"></paper-icon-button>
+          <paper-icon-button id="load_game" icon=file-download on-click="{{loadGameClicked}}"></paper-icon-button>
           <paper-icon-button id="navicon" icon="menu"></paper-icon-button>
         </core-toolbar>
         <div class="content">
@@ -74,10 +75,10 @@
         </div>
       </core-header-panel>
     </core-drawer-panel>
-    <paper-dialog id="loaddlg" heading="Load Game">
-      <paper-input id="feninput" label="FEN position"></paper-input>
+    <paper-dialog id="loaddlg" style="width:80%" heading="Load Game">
+      <paper-input id="pos_input" multiline style="width:100%" label="FEN or PGN"></paper-input>
       <paper-button label="Cancel" dismissive></paper-button>
-      <paper-button label="OK" affirmative default on-click="{{okClicked}}"></paper-button>
+      <paper-button label="OK" affirmative autofocus on-click="{{okClicked}}"></paper-button>
     </paper-dialog>
   </template>
   <script type="application/dart" src="chess_board_app.dart"></script>
