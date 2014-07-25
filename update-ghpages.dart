@@ -4,6 +4,6 @@ main() {
   new gh.Generator()
       ..withWeb = false
       ..withDocs = false
-      ..setExamples(true)
+      ..withExamples = true
       ..generate();
 }
