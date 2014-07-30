@@ -5,9 +5,9 @@ description: chessboard.dart is derived from chessboard.js, but created as a Pol
 homepage: https://github.com/andersforsell/chessboard.dart
 dependencies:
   chess: '>=0.6.2 <0.7.0'
-  core_elements: '>=0.0.6 <0.1.0'
-  paper_elements: '>=0.0.1 <0.1.0'
-  polymer: '>=0.11.0-dev.2 <0.12.0'
+  core_elements: '>=0.1.0 <0.2.0'
+  paper_elements: '>=0.1.0+1 <0.2.0'
+  polymer: '>=0.12.0 <0.13.0'
 dev_dependencies:
   ghpages_generator: any
 transformers:
