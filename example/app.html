@@ -193,7 +193,7 @@ html /deep/ [layout][start] {
   align-items: flex-start;
 }
 
-html /deep/ [layout][center] {
+html /deep/ [layout][center], html /deep/ [layout][center-center] {
   -ms-flex-align: center;
   -webkit-align-items: center;
   align-items: center;
@@ -213,7 +213,7 @@ html /deep/ [layout][start-justified] {
   justify-content: flex-start;
 }
 
-html /deep/ [layout][center-justified] {
+html /deep/ [layout][center-justified], html /deep/ [layout][center-center] {
   -ms-flex-pack: center;
   -webkit-justify-content: center;
   justify-content: center;
@@ -594,7 +594,7 @@ html /deep/ [segment], html /deep/ segment {
   </script>
 
 </polymer-element>
-<style>/* Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
+<style shim-shadowdom="">/* Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
 This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
 The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
 The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
@@ -605,6 +605,7 @@ html /deep/ core-icon {
   display: inline-block;
   vertical-align: middle;
   background-repeat: no-repeat;
+  fill: currentcolor;
 }
 
 html /deep/ core-icon[size=""] {
@@ -702,7 +703,7 @@ html /deep/ core-icon[size=""] > svg {
 </script>
 
 </polymer-element>
-<style>/*
+<style shim-shadowdom="">/*
 Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
 This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
 The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
@@ -714,7 +715,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 html /deep/ core-item {
   display: block;
   position: relative;
-  height: 40px;
+  min-height: 40px;
   white-space: nowrap;
 }
 
@@ -733,10 +734,10 @@ html /deep/ core-item::shadow ::content > a {
   bottom: 0;
   left: 0;
 }
-</style><polymer-element name="core-item" attributes="label icon src" horizontal="" center="" layout="">
+</style><polymer-element name="core-item" attributes="label icon src size" horizontal="" center="" layout="">
 <template>
 
-  <core-icon src="{{src}}" icon="{{icon}}" hidden?="{{!src &amp;&amp; !icon}}"></core-icon>{{label}}<content></content>
+  <core-icon src="{{src}}" icon="{{icon}}" size="{{size}}" hidden?="{{!src &amp;&amp; !icon}}"></core-icon>{{label}}<content></content>
   
 </template>
 <script>
@@ -765,6 +766,14 @@ html /deep/ core-item::shadow ::content > a {
      * @attribute label
      * @type string
      * @default ''
+     */
+
+    /**
+     * Specifies the size of the icon in pixel units.
+     *
+     * @attribute size
+     * @type number
+     * @default 24
      */
 
   });
@@ -805,6 +814,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   height: 64px;
   /* typography */
   font-size: 1.3em;
+  /* background */
+  background-color: #CFD8DC;
 }
 
 :host(.animate) {
@@ -1141,7 +1152,6 @@ mode: cover
 
 
 
-
 <!-- import core-icon for convenience 
   TODO(sorvell): we'd rather do this in core-iconset but we can't until
   crbug.com/373461 is addressed
@@ -1184,6 +1194,7 @@ mode: cover
         var icon = this.iconById(id);
         if (icon) {
           var content = icon.cloneNode(true);
+          content.removeAttribute('id');
           var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
           svg.setAttribute('viewBox', '0 0 ' + this.iconSize + ' ' +
               this.iconSize);
@@ -1894,7 +1905,7 @@ mode: cover
     });
   </script>
 </polymer-element>
-<style>/*
+<style shim-shadowdom="">/*
 Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
 This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
 The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
@@ -2274,7 +2285,16 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
 // https://github.com/dart-lang/core-elements/issues/11
 </script>
 
-<polymer-element name="paper-focusable" attributes="active focused disabled isToggle" tabindex="0" on-down="{{_downAction}}" on-up="{{_upAction}}" on-focus="{{focusAction}}" on-blur="{{blurAction}}" on-contextmenu="{{contextMenuAction}}">
+<polymer-element name="paper-focusable" attributes="active focused disabled isToggle" tabindex="0" on-down="{{downAction}}" on-up="{{upAction}}" on-focus="{{focusAction}}" on-blur="{{blurAction}}" on-contextmenu="{{contextMenuAction}}">
+
+  <template>
+    <style>
+      :host([disabled]) {
+        pointer-events: none;
+      }
+    </style>
+    <content></content>
+  </template>
 
   <script>
     Polymer('paper-focusable', {
@@ -2341,13 +2361,6 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
         }
       },
 
-      _downAction: function(e) {
-        if (this.disabled) {
-          return;
-        }
-        this.downAction(e);
-      },
-
       downAction: function() {
         this.pressed = true;
         this.focused = false;
@@ -2366,19 +2379,9 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
       //
       // This fires _after_ downAction.
       contextMenuAction: function(e) {
-        if (this.disabled) {
-          return;
-        }
         // Note that upAction may fire _again_ on the actual up event.
         this.upAction(e);
         this.focusAction();
-      },
-
-      _upAction: function(e) {
-        if (this.disabled) {
-          return;
-        }
-        this.upAction(e);
       },
 
       upAction: function() {
@@ -2790,13 +2793,14 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
 
   <template>
 
-    <style>.paper-shadow {
+    <style no-shim="">.paper-shadow {
   position: absolute;
   top: 0;
   left: 0;
   bottom: 0;
   right: 0;
   border-radius: inherit;
+  pointer-events: none;
 }
 
 .paper-shadow-animated.paper-shadow {
@@ -3070,6 +3074,7 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
   overflow: hidden;
 }
 
+/*
 #focusBg {
   position: absolute;
   top: 0;
@@ -3107,6 +3112,7 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
     opacity: 0;
   }
 }
+*/
 
 #ripple {
   position: absolute;
@@ -3148,7 +3154,7 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
     </template>
 
     <div id="clip">
-      <div id="focusBg"></div>
+      <!-- <div id="focusBg"></div> -->
       <paper-ripple id="ripple"></paper-ripple>
       <div id="content">
         <template if="{{iconSrc || icon}}">
@@ -3212,7 +3218,7 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
       z: 1,
 
       attached: function() {
-        if (this.textContent) {
+        if (this.textContent && !this.textContent.match(/\s+/)) {
           console.warn('Using textContent to label the button is deprecated. Use the "label" property instead');
           this.label = this.textContent;
         }
@@ -3323,7 +3329,7 @@ license that can be found in the LICENSE file.
       publish: {
 
         /**
-         * If true, the ripple expands to a square fill the containing box.
+         * If true, the ripple expands to a square to fill the containing box.
          *
          * @attribute fill
          * @type boolean
@@ -3340,6 +3346,12 @@ license that can be found in the LICENSE file.
 
       fillChanged: function() {
         this.$.ripple.classList.toggle('circle', !this.fill);
+      },
+
+      iconChanged: function(oldIcon) {
+        if (!this.label) {
+          this.setAttribute('aria-label', this.icon);
+        }
       }
 
     });
@@ -3370,7 +3382,7 @@ license that can be found in the LICENSE file.
 
 
 
-<polymer-element name="core-input" attributes="value inputValue placeholder disabled multiline rows validate invalid">
+<polymer-element name="core-input">
 
   <template>
 
@@ -3411,11 +3423,11 @@ textarea[fit] {
 }</style>
 
     <template if="{{multiline}}">
-      <textarea id="input" value="{{inputValue}}" rows="{{rows}}" fit?="{{rows === 'fit'}}" disabled?="{{disabled}}" placeholder="{{placeholder}}" aria-labelledby="placeholder" aria-invalid="{{invalid}}" on-change="{{inputChangeAction}}" on-focus="{{focusAction}}" on-blur="{{blurAction}}"></textarea>
+      <textarea id="input" value="{{inputValue}}" rows="{{rows}}" fit?="{{rows === 'fit'}}" disabled?="{{disabled}}" placeholder="{{placeholder}}" required?="{{required}}" readonly?="{{readonly}}" aria-label="{{label || placeholder}}" aria-invalid="{{invalid}}" on-change="{{inputChangeAction}}" on-focus="{{focusAction}}" on-blur="{{blurAction}}"></textarea>
     </template>
 
     <template if="{{!multiline}}">
-      <input id="input" value="{{inputValue}}" disabled?="{{disabled}}" placeholder="{{placeholder}}" aria-labelledby="placeholder" aria-invalid="{{invalid}}" on-change="{{inputChangeAction}}" on-focus="{{focusAction}}" on-blur="{{blurAction}}">
+      <input id="input" value="{{inputValue}}" disabled?="{{disabled}}" type="{{type}}" placeholder="{{placeholder}}" required?="{{required}}" readonly?="{{readonly}}" aria-label="{{label || placeholder}}" aria-invalid="{{invalid}}" on-change="{{inputChangeAction}}" on-focus="{{focusAction}}" on-blur="{{blurAction}}">
     </template>
 
   </template>
@@ -3423,118 +3435,156 @@ textarea[fit] {
   <script>
 
     Polymer('core-input', {
+      publish: {
+        /**
+         * Placeholder text that hints to the user what can be entered in
+         * the input.
+         *
+         * @attribute placeholder
+         * @type string
+         * @default ''
+         */
+        placeholder: '',
+  
+        /**
+         * If true, this input cannot be focused and the user cannot change
+         * its value.
+         *
+         * @attribute disabled
+         * @type boolean
+         * @default false
+         */
+        disabled: false,
+  
+        /**
+         * Set the input type. Not supported for `multiline`.
+         *
+         * @attribute type
+         * @type string
+         * @default text
+         */
+        type: 'text',
 
-      /**
-       * Placeholder text that hints to the user what can be entered in
-       * the input.
-       *
-       * @attribute placeholder
-       * @type string
-       * @default ''
-       */
-      placeholder: '',
+        /**
+         * If true, the user cannot modify the value of the input.
+         *
+         * @attribute readonly
+         * @type boolean
+         * @default false
+         */
+        readonly: false,
 
-      /**
-       * If true, this input cannot be focused and the user cannot change
-       * its value.
-       *
-       * @attribute disabled
-       * @type boolean
-       * @default false
-       */
-      disabled: false,
-
-      /**
-       * If true, this input accepts multi-line input like a `<textarea>`
-       *
-       * @attribute multiline
-       * @type boolean
-       * @default false
-       */
-      multiline: false,
-
-      /**
-       * (multiline only) The height of this text input in rows. The input
-       * will scroll internally if more input is entered beyond the size
-       * of the component. This property is meaningless if multiline is
-       * false. You can also set this property to "fit" and size the
-       * component with CSS to make the input fit the CSS size.
-       *
-       * @attribute rows
-       * @type number|'fit'
-       * @default 'fit'
-       */
-      rows: 'fit',
-
-      /**
-       * The current value of this input.
-       *
-       * @attribute inputValue
-       * @type string
-       * @default ''
-       */
-      inputValue: '',
-
-      /**
-       * The value of the input committed by the user, either by changing the
-       * inputValue and blurring the input, or by hitting the `enter` key.
-       *
-       * @attribute value
-       * @type string
-       * @default ''
-       */
-      value: '',
-
-      /**
-       * If this property is not null, the text input's inputValue will be
-       * validated. You can validate the value with either a regular expression
-       * or a custom function.
-       *
-       * To use a regular expression, set this property to a RegExp object or
-       * a string containing the regular expression to match against. To use a
-       * custom validator, set this property to a function with the signature
-       * function(value) that returns a boolean. The input is valid if the
-       * function returns true.
-       *
-       * Example:
-       *
-       *     // valid only if the value is a number
-       *     <core-input validate="^[0-9]*$"></core-input> 
-       * 
-       *     // valid only if the value is a number
-       *     this.$.input.validate = /^[0-9]*$/;
-       *
-       *     this.$.input2.validate = function(value) {
-       *         // valid only if the value is 'foo'
-       *         return value === 'foo';  
-       *     }
-       *
-       * @attribute validate
-       * @type string|RegExp|Function(value)
-       * @default null
-       */
-      validate: null,
-
-      /**
-       * If this property is true, the text input's inputValue failed validation.
-       *
-       * @attribute invalid
-       * @type boolean
-       * @default false
-       */
-      invalid: false,
-
+        /**
+         * If true, the input is invalid until the value becomes non-null.
+         *
+         * @attribute required
+         * @type boolean
+         * @default false
+         */
+        required: false,
+        
+        /**
+         * If true, this input accepts multi-line input like a `<textarea>`
+         *
+         * @attribute multiline
+         * @type boolean
+         * @default false
+         */
+        multiline: false,
+  
+        /**
+         * (multiline only) The height of this text input in rows. The input
+         * will scroll internally if more input is entered beyond the size
+         * of the component. This property is meaningless if multiline is
+         * false. You can also set this property to "fit" and size the
+         * component with CSS to make the input fit the CSS size.
+         *
+         * @attribute rows
+         * @type number|'fit'
+         * @default 'fit'
+         */
+        rows: 'fit',
+  
+        /**
+         * The current value of this input. Changing inputValue programmatically
+         * will cause value to be out of sync. Instead, change value directly
+         * or call commit() after changing inputValue.
+         *
+         * @attribute inputValue
+         * @type string
+         * @default ''
+         */
+        inputValue: '',
+  
+        /**
+         * The value of the input committed by the user, either by changing the
+         * inputValue and blurring the input, or by hitting the `enter` key.
+         *
+         * @attribute value
+         * @type string
+         * @default ''
+         */
+        value: '',
+  
+        /**
+         * If this property is not null, the text input's inputValue will be
+         * validated. You can validate the value with either a regular expression
+         * or a custom function.
+         *
+         * To use a regular expression, set this property to a RegExp object or
+         * a string containing the regular expression to match against. To use a
+         * custom validator, set this property to a function with the signature
+         * function(value) that returns a boolean. The input is valid if the
+         * function returns true.
+         *
+         * Example:
+         *
+         *     // valid only if the value is a number
+         *     <core-input validate="^[0-9]*$"></core-input> 
+         * 
+         *     // valid only if the value is a number
+         *     this.$.input.validate = /^[0-9]*$/;
+         *
+         *     this.$.input2.validate = function(value) {
+         *         // valid only if the value is 'foo'
+         *         return value === 'foo';  
+         *     }
+         *
+         * @attribute validate
+         * @type string|RegExp|Function(value)
+         * @default null
+         */
+        validate: null,
+  
+        /**
+         * If this property is true, the text input's inputValue failed validation.
+         *
+         * @attribute invalid
+         * @type boolean
+         * @default false
+         */
+        invalid: false,
+      },
+      
       validateValue: function() {
         var valid = true;
-        if (!this.inputValue) {
-          valid = true;
-        } else if (typeof this.validate === 'string') {
-          valid = new RegExp(this.validate).exec(this.inputValue);
-        } else if (this.validate.exec) {
-          valid = this.validate.exec(this.inputValue);
-        } else if (this.validate instanceof Function) {
-          valid = this.validate.call(this.inputValue);
+
+        if (this.validate) {
+
+          if (!this.inputValue) {
+            valid = !this.required;
+          } else if (typeof this.validate === 'string') {
+            valid = new RegExp(this.validate).exec(this.inputValue);
+          } else if (this.validate.exec) {
+            valid = this.validate.exec(this.inputValue);
+          } else if (this.validate instanceof Function) {
+            valid = this.validate.call(this, this.inputValue);
+          }
+
+        } else if (this.required) {
+          valid = !!this.inputValue;
         }
+
         this.invalid = !valid;
       },
 
@@ -3542,16 +3592,14 @@ textarea[fit] {
         this.classList.toggle('invalid', this.invalid);
         if (this.invalid) {
           this.fire('input-invalid', {value: this.inputValue});
+        } else {
+          this.fire('input-valid', {value: this.inputValue});
         }
       },
 
       inputValueChanged: function() {
-        if (this.validate) {
+        if (this.validate || this.required) {
           this.validateValue();
-        }
-
-        if (!this.inputValue) {
-          this.value = '';
         }
       },
 
@@ -3559,8 +3607,21 @@ textarea[fit] {
         this.inputValue = this.value;
       },
 
+      requiredChanged: function() {
+        this.validateValue();
+      },
+
+      /**
+       * Commits the inputValue to value.
+       *
+       * @method commit
+       */
+      commit: function() {
+         this.value = this.inputValue;
+      },
+
       inputChangeAction: function() {
-        this.value = this.inputValue;
+        this.commit();
         if (!window.ShadowDOMPolyfill) {
           // re-fire non-bubbling event
           this.fire('change', null, this, false);
@@ -3740,6 +3801,7 @@ textarea[fit] {
 }
 
 :host([multiline]) #underlineContainer.animating {
+  -webkit-transition: top 0.2s ease-in;
   transition: top 0.2s ease-in;
 }
 
@@ -3815,7 +3877,7 @@ textarea[fit] {
 }
 </style>
 
-    <div id="floatedLabel" class="hidden"><span id="floatedLabelSpan">{{label}}</span></div>
+    <div id="floatedLabel" class="hidden" hidden?="{{!floatingLabel}}"><span id="floatedLabelSpan">{{label}}</span></div>
 
     <div id="container" on-transitionend="{{transitionEndAction}}" on-webkittransitionend="{{transitionEndAction}}">
 
@@ -3999,6 +4061,7 @@ textarea[fit] {
           this.$.label.classList.add('animating');
           this.async(function() {
             this.$.label.style.webkitTransform = 'none';
+            this.$.label.style.transform = 'none';
           });
         }
         this.focused = false;
@@ -4017,6 +4080,7 @@ textarea[fit] {
         var rect = this.$.underline.getBoundingClientRect();
         var right = e.x - rect.left;
         this.$.underlineHighlight.style.webkitTransformOriginX = right + 'px';
+        this.$.underlineHighlight.style.transformOriginX = right + 'px';
         this.$.underlineHighlight.classList.remove('focused');
         this.underlineAsync = this.async(function() {
           this.$.underlineHighlight.classList.add('pressed');
@@ -4075,6 +4139,7 @@ textarea[fit] {
           this.$.label.classList.add('focusedColor');
           this.$.label.classList.add('animating');
           this.$.label.style.webkitTransform = this.$.label.cachedTransform;
+          this.$.label.style.transform = this.$.label.cachedTransform;
         }
       },
 
@@ -4616,7 +4681,7 @@ Fired when the `core-overlay`'s `opened` property changes.
         // TODO(sorvell): force SD Polyfill to render
         forcePolyfillRender(this.target);
         if (!this._shouldPosition) {
-          this.target.style.position = 'static';
+          this.target.style.position = 'absolute';
           var computed = getComputedStyle(this.target);
           var t = (computed.top === 'auto' && computed.bottom === 'auto');
           var l = (computed.left === 'auto' && computed.right === 'auto');
@@ -4951,7 +5016,7 @@ Fired when the `core-overlay`'s `opened` property changes.
 <script>
 // This empty script is here to workaround issue
 // https://github.com/dart-lang/core-elements/issues/11
-</script><polymer-element name="paper-dialog" attributes="opened heading transition">
+</script><polymer-element name="paper-dialog" attributes="opened heading transition autoCloseDisabled backdrop layered closeSelector" role="dialog">
 
   <template>
 
@@ -5004,7 +5069,7 @@ polymer-next-selector { content: ':host > *'; }
       <paper-shadow z="3" hasposition=""></paper-shadow>
     </div>
 
-    <core-overlay id="overlay" opened="{{opened}}" target="{{}}" sizingtarget="{{$.container}}" closeselector="[dismissive],[affirmative]" transition="{{transition}}" margin="20"></core-overlay>
+    <core-overlay id="overlay" opened?="{{opened}}" autoclosedisabled?="{{autoCloseDisabled}}" backdrop?="{{backdrop}}" layered?="{{layered}}" target="{{}}" sizingtarget="{{$.container}}" closeselector="{{closeSelector}}" transition="{{transition}}" margin="20"></core-overlay>
 
     <div id="container" layout="" vertical="">
 
@@ -5036,6 +5101,47 @@ polymer-next-selector { content: ':host > *'; }
        * @default false
        */
       opened: false,
+    
+      /**
+       * If true, the dialog has a backdrop darkening the rest of the screen.
+       * The backdrop element is attached to the document body and may be styled
+       * with the class `core-overlay-backdrop`. When opened the `core-opened`
+       * class is applied.
+       *
+       * @attribute backdrop
+       * @type boolean
+       * @default false
+       */    
+      backdrop: false,
+
+      /**
+       * If true, the dialog is guaranteed to display above page content.
+       *
+       * @attribute layered
+       * @type boolean
+       * @default false
+      */
+      layered: false,
+
+      /**
+       * By default a dialog will close automatically if the user
+       * taps outside it or presses the escape key. Disable this
+       * behavior by setting the `autoCloseDisabled` property to true.
+       * @attribute autoCloseDisabled
+       * @type boolean
+       * @default false
+       */
+      autoCloseDisabled: false,
+
+      /**
+       * This property specifies a selector matching elements that should
+       * close the dialog on tap.
+       *
+       * @attribute closeSelector
+       * @type string
+       * @default ""
+       */
+      closeSelector: '[dismissive],[affirmative]',
 
       /**
        * @attribute heading
@@ -5060,6 +5166,10 @@ polymer-next-selector { content: ':host > *'; }
        */
       toggle: function() {
         this.$.overlay.toggle();
+      },
+
+      headingChanged: function() {
+        this.setAttribute('aria-label', this.heading);
       }
 
     });
