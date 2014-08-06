@@ -6,6 +6,7 @@
 import 'dart:html';
 import 'dart:math';
 import 'package:polymer/polymer.dart';
+import 'package:core_elements/core_drawer_panel.dart';
 import 'package:paper_elements/paper_input.dart';
 import 'package:chessboard/chess_board.dart';
 
@@ -20,7 +21,7 @@ class ChessBoardApp extends PolymerElement {
   @override
   void domReady() {
     var navicon = $['navicon'];
-    var drawerPanel = $['drawerPanel'];
+    CoreDrawerPanel drawerPanel = $['drawerPanel'];
 
     _resize();
 
@@ -28,8 +29,7 @@ class ChessBoardApp extends PolymerElement {
       _resize();
     });
 
-    // TODO uncomment when https://github.com/dart-lang/core-elements/issues/39 is fixed
-    // navicon.onClick.listen((e) => drawerPanel.togglePanel());
+    navicon.onClick.listen((e) => drawerPanel.togglePanel());
   }
 
   void _resize() {
