@@ -1,20 +1,20 @@
-### 0.0.1
+### 0.0.5
 
-Initial release
+Fixed a problem with the "drawer" not being closed on iOS.
+
+### 0.0.4
+
+Upgraded pub dependencies.
+
+### 0.0.3
+
+Upgraded pub dependencies.
 
 ### 0.0.2
 
 Support loading PGN.
 Add undo button in example.
 
-### 0.0.3
+### 0.0.1
 
-Upgraded pub dependencies.
-
-### 0.0.4
-
-Upgraded pub dependencies.
-
-### 0.0.5
-
-Fixed a problem with the "drawer" not being closed on iOS.
+Initial release
