@@ -1,3 +1,7 @@
+### 0.0.6
+
+Fixed drawer attribute 'rightDrawer' and upgraded pub dependencies.
+
 ### 0.0.5
 
 Fixed a problem with the "drawer" not being closed on iOS.
