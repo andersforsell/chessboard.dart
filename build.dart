@@ -1,5 +1,1 @@
-import 'package:polymer/builder.dart';
-
-main(args) {
-  build(options: parseOptions(args));
-}
+export 'package:polymer/default_build.dart';
