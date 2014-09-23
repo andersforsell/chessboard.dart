@@ -1,15 +1,15 @@
-<!DOCTYPE html><html><head>
+<!DOCTYPE html><html><head><script src="packages/web_components/platform.js"></script>
+
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Chessboard App</title>
 
     <!-- Add Roboto font -->
-    
+    <link href="http://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" type="text/css">
 
     <!-- Setup Web Components -->
-    
-    
+    <script src="packages/web_components/dart_support.js"></script>
 
     <!-- import the chess-board-app -->
     
@@ -17,32 +17,7 @@
     <!-- Start the application -->
     
   </head>
-  <body fullbleed="" unresolved="" touch-action="auto"><link href="http://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" type="text/css"><script src="packages/web_components/platform.js"></script><script src="packages/web_components/dart_support.js"></script>
-
-<!-- import core elements -->
-
-
-
-
-
-
-
-
-
-<!-- import the chess-board -->
-
-
-
-
-
-<!-- unminified for debugging:
-<link rel="import" href="src/js/polymer/layout.html">
-<script src="src/js/polymer/polymer.concat.js"></script>
--->
-
-
-
-<style shim-shadowdom="">
+  <body fullbleed="" unresolved=""><div hidden=""><style shim-shadowdom="">
 /*******************************
           Flex Layout
 *******************************/
@@ -319,30 +294,30 @@ html /deep/ [segment], html /deep/ segment {
   border-radius: 5px 5px 5px 5px;
 }
 
-</style><script src="packages/polymer/src/js/polymer/polymer.js"></script><script>
+</style>
+
+<script src="packages/polymer/src/js/polymer/polymer.js"></script>
+
+<script>
 // TODO(sigmund): remove this script tag (dartbug.com/19650). This empty
 // script tag is necessary to work around a bug in Chrome 36.
 </script>
 
+<!-- unminified for debugging:
+<link rel="import" href="src/js/polymer/layout.html">
+<script src="src/js/polymer/polymer.concat.js"></script>
+-->
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+<!-- import core elements -->
 
 <script>
 // This empty script is here to workaround issue
 // https://github.com/dart-lang/core-elements/issues/11
-</script><polymer-element name="core-meta" attributes="label type" hidden="">
+</script>
+
+
+<polymer-element name="core-meta" attributes="label type" hidden="">
 <script>
 
   (function() {
@@ -428,6 +403,8 @@ html /deep/ [segment], html /deep/ segment {
   
 </script>
 </polymer-element>
+
+
 <polymer-element name="core-iconset" extends="core-meta" attributes="src width icons iconSize">
   
   <script>
@@ -607,6 +584,8 @@ html /deep/ [segment], html /deep/ segment {
   </script>
 
 </polymer-element>
+
+
 <style shim-shadowdom="">/* Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
 This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
 The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
@@ -622,7 +601,9 @@ html /deep/ core-icon {
   position: relative;
   height: 24px;
   width: 24px;
-}</style><polymer-element name="core-icon" attributes="src icon alt">
+}</style>
+
+<polymer-element name="core-icon" attributes="src icon alt">
 <script>
 (function() {
   
@@ -763,6 +744,8 @@ html /deep/ core-icon {
 </script>
 
 </polymer-element>
+
+
 <style shim-shadowdom="">/*
 Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
 This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
@@ -807,7 +790,9 @@ html /deep/ core-item::shadow ::content > a {
   transparent or minifiers change it to `transparent` which does not work. */
   background-color: rgba(0, 0, 0, 0.000001);
 }
-</style><polymer-element name="core-item" attributes="label icon src" horizontal="" center="" layout="">
+</style>
+
+<polymer-element name="core-item" attributes="label icon src" horizontal="" center="" layout="">
 <template>
 
   <core-icon src="{{src}}" icon="{{icon}}" hidden?="{{!src &amp;&amp; !icon}}"></core-icon>
@@ -847,6 +832,8 @@ html /deep/ core-item::shadow ::content > a {
 
 </script>
 </polymer-element>
+
+
 
 
 
@@ -988,6 +975,7 @@ polyfill-next-selector { content: ':host .indent'; }
 
 </template>
 </polymer-element>
+
 
 
 
@@ -1228,7 +1216,6 @@ mode: cover
 
 
 
-
 <polymer-element name="core-iconset-svg" extends="core-meta" attributes="iconSize">
 
   <script>
@@ -1346,6 +1333,7 @@ mode: cover
   </script>
 
 </polymer-element>
+
 <core-iconset-svg id="icons" iconsize="24">
 <svg><defs>
 <g id="accessibility"><path d="M12,2c1.1,0,2,0.9,2,2s-0.9,2-2,2s-2-0.9-2-2S10.9,2,12,2z M21,9h-6v13h-2v-6h-2v6H9V9H3V7h18V9z"></path></g>
@@ -1623,11 +1611,6 @@ mode: cover
 
 
 
-
-
-
-
-
 <polymer-element name="core-selection" attributes="multi" hidden="">
   <script>
     Polymer('core-selection', {
@@ -1703,6 +1686,8 @@ mode: cover
     });
   </script>
 </polymer-element>
+
+
 <polymer-element name="core-selector" attributes="selected multi valueattr selectedClass selectedProperty selectedAttribute selectedItem selectedModel selectedIndex notap target itemsSelector activateEvent">
 
   <template>
@@ -2095,6 +2080,8 @@ mode: cover
     });
   </script>
 </polymer-element>
+
+
 <style shim-shadowdom="">/*
 Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
 This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
@@ -2113,10 +2100,9 @@ polyfill-next-selector { content: 'core-menu > core-item'; }
 html /deep/ core-menu::shadow ::content > core-item {
   cursor: default;
 }
-</style><polymer-element name="core-menu" extends="core-selector" noscript=""></polymer-element>
+</style>
 
-
-
+<polymer-element name="core-menu" extends="core-selector" noscript=""></polymer-element>
 
 
 
@@ -2179,6 +2165,9 @@ html /deep/ core-menu::shadow ::content > core-item {
     });
   </script>
 </polymer-element>
+
+
+
 <polymer-element name="core-drawer-panel" touch-action="auto">
 <template>
 
@@ -2615,7 +2604,10 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
 
 
 
-
+<script>
+// This empty script is here to workaround issue
+// https://github.com/dart-lang/core-elements/issues/11
+</script>
 
 <script>
 // This empty script is here to workaround issue
@@ -2624,14 +2616,6 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
 
 
 
-
-
-
-
-<script>
-// This empty script is here to workaround issue
-// https://github.com/dart-lang/core-elements/issues/11
-</script>
 
 <polymer-element name="paper-focusable" attributes="active focused disabled isToggle" tabindex="0" on-down="{{downAction}}" on-up="{{upAction}}" on-focus="{{focusAction}}" on-blur="{{blurAction}}" on-contextmenu="{{contextMenuAction}}">
 
@@ -2756,6 +2740,7 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
 
   </script>
 </polymer-element>
+
 
 
 <polymer-element name="paper-ripple" attributes="initialOpacity opacityDecayVelocity">
@@ -3126,6 +3111,7 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
 </polymer-element>
 
 
+
 <polymer-element name="paper-shadow">
 
   <template>
@@ -3380,6 +3366,8 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
     });
   </script>
 </polymer-element>
+
+
 <polymer-element name="paper-button" extends="paper-focusable" attributes="label raisedButton iconSrc icon" role="button">
 
   <template>
@@ -3659,6 +3647,8 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
     });
   </script>
 </polymer-element>
+
+
 <polymer-element name="paper-icon-button" extends="paper-button" attributes="fill">
 
   <template>
@@ -3742,17 +3732,10 @@ license that can be found in the LICENSE file.
 
 
 
-
-
-
-
-
 <script>
 // This empty script is here to workaround issue
 // https://github.com/dart-lang/core-elements/issues/11
 </script>
-
-
 
 
 <polymer-element name="core-input" on-focus="{{focusAction}}">
@@ -4216,12 +4199,13 @@ textarea[fit] {
   </script>
 
 </polymer-element>
+
+
+
 <script>
 // This empty script is here to workaround issue
 // https://github.com/dart-lang/core-elements/issues/11
 </script>
-
-
 
 
 <polymer-element name="core-style" hidden="">
@@ -4511,10 +4495,15 @@ Polymer('core-style', {
 })();
 </script>
 </polymer-element>
+
+
+
 <script>
 // This empty script is here to workaround issue
 // https://github.com/dart-lang/core-elements/issues/11
-</script><core-style id="paper-input">
+</script>
+
+<core-style id="paper-input">
 
 :host([focused]) .floated-label {
   color: {{g.paperInput.focusedColor}};
@@ -4946,92 +4935,17 @@ textarea {
 </polymer-element>
 
 
+
+
+
+
+
+
+<!-- import the chess-board -->
+
+
 <!-- import the paper elements -->
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<!--
-The `core-overlay` element displays overlayed on top of other content. It starts
-out hidden and is displayed by setting its `opened` property to true.
-A `core-overlay's` opened state can be toggled by calling the `toggle`
-method.
-
-The `core-overlay` will, by default, show/hide itself when it's opened. The 
-`target` property may be set to another element to cause that element to 
-be shown when the overlay is opened.
-
-It's common to want a `core-overlay` to animate to its opened
-position. The `core-overlay` element uses a `core-transition` to handle
-animation. The default transition is `core-transition-fade` which 
-causes the overlay to fade in when displayed. See 
-<a href="../core-transition/">`core-transition`</a> for more
-information about customizing a `core-overlay's` opening animation. The
-`backdrop` property can be set to true to show a backdrop behind the overlay
-that will darken the rest of the window.
-
-An element that should close the `core-overlay` will automatically
-do so if it's given the `core-overlay-toggle` attribute. This attribute
-can be customized with the `closeAttribute` property. You can also use
-`closeSelector` if more general matching is needed.
-
-By default  `core-overlay` will close whenever the user taps outside it or
-presses the escape key. This behavior can be turned off via the
-`autoCloseDisabled` property.
-
-    <core-overlay>
-      <h2>Dialog</h2>
-      <input placeholder="say something..." autofocus>
-      <div>I agree with this wholeheartedly.</div>
-      <button core-overlay-toggle>OK</button>
-    </core-overlay>
-
-`core-overlay` will automatically size and position itself according to the 
-following rules. If the target's style.top and style.left are unset, the 
-target will be centered. The size of the target is constrained to be no larger
-than the window dimensions. The `margin` property specifies the extra amount
-of space that should be reserved around the overlay. This can be used to ensure
-that, for example, a drop shadow is always visible around the overlay.
-
-@group Core Elements
-@element core-overlay
-@homepage github.io
--->
-<!--
-Fired when the `core-overlay`'s `opened` property changes.
-
-@event core-overlay-open
-@param {Object} detail
-@param {Object} detail.opened the opened state
--->
-<!--
-Fired when the `core-overlay` has completely opened.
-
-@event core-overlay-open-completed
--->
-<!--
-Fired when the `core-overlay` has completely closed.
-
-@event core-overlay-close-completed
--->
 
 
 
@@ -5106,6 +5020,7 @@ Fired when the `core-overlay` has completely closed.
   </script>
 </polymer-element>
 
+
 <polymer-element name="core-key-helper">
   <script>
     Polymer('core-key-helper', {
@@ -5114,6 +5029,7 @@ Fired when the `core-overlay` has completely closed.
     });
   </script>
 </polymer-element>
+
 <polymer-element name="core-overlay-layer">
 <template>
   <style>
@@ -5217,6 +5133,71 @@ Fired when the `core-overlay` has completely closed.
 })();
 </script>
 </polymer-element>
+
+
+<!--
+The `core-overlay` element displays overlayed on top of other content. It starts
+out hidden and is displayed by setting its `opened` property to true.
+A `core-overlay's` opened state can be toggled by calling the `toggle`
+method.
+
+The `core-overlay` will, by default, show/hide itself when it's opened. The 
+`target` property may be set to another element to cause that element to 
+be shown when the overlay is opened.
+
+It's common to want a `core-overlay` to animate to its opened
+position. The `core-overlay` element uses a `core-transition` to handle
+animation. The default transition is `core-transition-fade` which 
+causes the overlay to fade in when displayed. See 
+<a href="../core-transition/">`core-transition`</a> for more
+information about customizing a `core-overlay's` opening animation. The
+`backdrop` property can be set to true to show a backdrop behind the overlay
+that will darken the rest of the window.
+
+An element that should close the `core-overlay` will automatically
+do so if it's given the `core-overlay-toggle` attribute. This attribute
+can be customized with the `closeAttribute` property. You can also use
+`closeSelector` if more general matching is needed.
+
+By default  `core-overlay` will close whenever the user taps outside it or
+presses the escape key. This behavior can be turned off via the
+`autoCloseDisabled` property.
+
+    <core-overlay>
+      <h2>Dialog</h2>
+      <input placeholder="say something..." autofocus>
+      <div>I agree with this wholeheartedly.</div>
+      <button core-overlay-toggle>OK</button>
+    </core-overlay>
+
+`core-overlay` will automatically size and position itself according to the 
+following rules. If the target's style.top and style.left are unset, the 
+target will be centered. The size of the target is constrained to be no larger
+than the window dimensions. The `margin` property specifies the extra amount
+of space that should be reserved around the overlay. This can be used to ensure
+that, for example, a drop shadow is always visible around the overlay.
+
+@group Core Elements
+@element core-overlay
+@homepage github.io
+-->
+<!--
+Fired when the `core-overlay`'s `opened` property changes.
+
+@event core-overlay-open
+@param {Object} detail
+@param {Object} detail.opened the opened state
+-->
+<!--
+Fired when the `core-overlay` has completely opened.
+
+@event core-overlay-open-completed
+-->
+<!--
+Fired when the `core-overlay` has completely closed.
+
+@event core-overlay-close-completed
+-->
 <style>
   .core-overlay-backdrop {
     position: fixed;
@@ -5232,7 +5213,9 @@ Fired when the `core-overlay` has completely closed.
   .core-overlay-backdrop.core-opened {
     opacity: 0.6;
   }
-</style><polymer-element name="core-overlay">
+</style>
+
+<polymer-element name="core-overlay">
 <script>
 (function() {
 
@@ -5832,10 +5815,19 @@ Fired when the `core-overlay` has completely closed.
 
 
 
+
+
+
+
+
+
 <script>
 // This empty script is here to workaround issue
 // https://github.com/dart-lang/core-elements/issues/11
-</script><polymer-element name="paper-dialog" attributes="opened heading transition autoCloseDisabled backdrop layered closeSelector" role="dialog">
+</script>
+
+
+<polymer-element name="paper-dialog" attributes="opened heading transition autoCloseDisabled backdrop layered closeSelector" role="dialog">
 
   <template>
 
@@ -6005,6 +5997,12 @@ polymer-next-selector { content: ':host > *'; }
   </script>
 
 </polymer-element>
+
+
+
+
+
+
 <polymer-element name="chess-board" attributes="position reversed showNotation pieceTheme">
   <template>
     <style>
@@ -6120,6 +6118,8 @@ polymer-next-selector { content: ':host > *'; }
   
 </polymer-element>
 
+
+
 <polymer-element name="chess-board-app">
   <template>
     <style>
@@ -6188,7 +6188,7 @@ polymer-next-selector { content: ':host > *'; }
   
 </polymer-element>
 
-
+</div>
     <chess-board-app></chess-board-app>
   
 
