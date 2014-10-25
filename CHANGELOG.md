@@ -1,3 +1,7 @@
+### 0.0.8
+
+Upgraded pub dependencies.
+
 ### 0.0.7
 
 Removed 'touch-action' (now handled by polymer) and upgraded pub dependencies.
