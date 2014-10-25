@@ -46,7 +46,7 @@ window.logFlags = window.logFlags || {};
   }
 
   if (flags.shadow && document.querySelectorAll('script').length > 1) {
-    console.warn('platform.js is not the first script on the page. ' +
+    console.log('Warning: platform.js is not the first script on the page. ' +
         'See http://www.polymer-project.org/docs/start/platform.html#setup ' +
         'for details.');
   }
@@ -88,6 +88,7 @@ if (typeof WeakMap === 'undefined') {
           entry[1] = value;
         else
           defineProperty(key, this.name, {value: [key, value], writable: true});
+        return this;
       },
       get: function(key) {
         var entry;
@@ -115,19 +116,14 @@ if (typeof WeakMap === 'undefined') {
 // select ShadowDOM impl
 if (Platform.flags.shadow) {
 
-// Copyright 2012 Google Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
+ * This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+ * The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+ * The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+ * Code distributed by Google as part of the polymer project is also
+ * subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+ */
 
 (function(global) {
   'use strict';
@@ -187,7 +183,7 @@ if (Platform.flags.shadow) {
     // Firefox OS Apps do not allow eval. This feature detection is very hacky
     // but even if some other platform adds support for this function this code
     // will continue to work.
-    if (navigator.getDeviceStorage) {
+    if (typeof navigator != 'undefined' && navigator.getDeviceStorage) {
       return false;
     }
 
@@ -202,7 +198,7 @@ if (Platform.flags.shadow) {
   var hasEval = detectEval();
 
   function isIndex(s) {
-    return +s === s >>> 0;
+    return +s === s >>> 0 && s !== '';
   }
 
   function toNumber(s) {
@@ -916,25 +912,11 @@ if (Platform.flags.shadow) {
 
   var runningMicrotaskCheckpoint = false;
 
-  var hasDebugForceFullDelivery = hasObserve && hasEval && (function() {
-    try {
-      eval('%RunMicrotasks()');
-      return true;
-    } catch (ex) {
-      return false;
-    }
-  })();
-
   global.Platform = global.Platform || {};
 
   global.Platform.performMicrotaskCheckpoint = function() {
     if (runningMicrotaskCheckpoint)
       return;
-
-    if (hasDebugForceFullDelivery) {
-      eval('%RunMicrotasks()');
-      return;
-    }
 
     if (!collectObservers)
       return;
@@ -2336,7 +2318,13 @@ window.ShadowDOMPolyfill = {};
   var globalMutationObservers = [];
   var isScheduled = false;
 
-  function scheduleCallback() {
+  function scheduleCallback(observer) {
+    if (observer.scheduled_)
+      return;
+
+    observer.scheduled_ = true;
+    globalMutationObservers.push(observer);
+
     if (isScheduled)
       return;
     setEndOfMicrotask(notifyObservers);
@@ -2356,6 +2344,7 @@ window.ShadowDOMPolyfill = {};
 
       for (var i = 0; i < notifyList.length; i++) {
         var mo = notifyList[i];
+        mo.scheduled_ = false;
         var queue = mo.takeRecords();
         removeTransientObserversFor(mo);
         if (queue.length) {
@@ -2471,8 +2460,6 @@ window.ShadowDOMPolyfill = {};
       }
     }
 
-    var anyObserversEnqueued = false;
-
     // 4.
     for (var uid in interestedObservers) {
       var observer = interestedObservers[uid];
@@ -2505,15 +2492,9 @@ window.ShadowDOMPolyfill = {};
         record.oldValue = associatedStrings[uid];
 
       // 8.
-      if (!observer.records_.length) {
-        globalMutationObservers.push(observer);
-        anyObserversEnqueued = true;
-      }
+      scheduleCallback(observer);
       observer.records_.push(record);
     }
-
-    if (anyObserversEnqueued)
-      scheduleCallback();
   }
 
   var slice = Array.prototype.slice;
@@ -2576,6 +2557,7 @@ window.ShadowDOMPolyfill = {};
     this.nodes_ = [];
     this.records_ = [];
     this.uid_ = ++uidCounter;
+    this.scheduled_ = false;
   }
 
   MutationObserver.prototype = {
@@ -2660,6 +2642,10 @@ window.ShadowDOMPolyfill = {};
       // the required listeners set up on the target.
       if (node === this.target)
         return;
+
+      // Make sure we remove transient observers at the end of microtask, even
+      // if we didn't get any change records.
+      scheduleCallback(this.observer);
 
       this.transientObservedNodes.push(node);
       var registrations = registrationsTable.get(node);
@@ -3018,6 +3004,19 @@ window.ShadowDOMPolyfill = {};
     }
   }
 
+
+  function isLoadLikeEvent(event) {
+    switch (event.type) {
+      // http://www.whatwg.org/specs/web-apps/current-work/multipage/webappapis.html#events-and-the-window-object
+      case 'load':
+      // http://www.whatwg.org/specs/web-apps/current-work/multipage/browsers.html#unloading-documents
+      case 'beforeunload':
+      case 'unload':
+        return true;
+    }
+    return false;
+  }
+
   function dispatchEvent(event, originalWrapperTarget) {
     if (currentlyDispatchingEvents.get(event))
       throw new Error('InvalidStateError');
@@ -3035,12 +3034,11 @@ window.ShadowDOMPolyfill = {};
     // http://www.whatwg.org/specs/web-apps/current-work/multipage/the-end.html#the-end
     var overrideTarget;
     var win;
-    var type = event.type;
 
     // Should really be not cancelable too but since Firefox has a bug there
     // we skip that check.
     // https://bugzilla.mozilla.org/show_bug.cgi?id=999456
-    if (type === 'load' && !event.bubbles) {
+    if (isLoadLikeEvent(event) && !event.bubbles) {
       var doc = originalWrapperTarget;
       if (doc instanceof wrappers.Document && (win = doc.defaultView)) {
         overrideTarget = doc;
@@ -3055,7 +3053,7 @@ window.ShadowDOMPolyfill = {};
       } else {
         eventPath = getEventPath(originalWrapperTarget, event);
 
-        if (event.type !== 'load') {
+        if (!isLoadLikeEvent(event)) {
           var doc = eventPath[eventPath.length - 1];
           if (doc instanceof wrappers.Document)
             win = doc.defaultView;
@@ -3161,7 +3159,6 @@ window.ShadowDOMPolyfill = {};
     var type = event.type;
 
     var anyRemoved = false;
-    // targetTable.set(event, target);
     targetTable.set(event, target);
     currentTargetTable.set(event, currentTarget);
 
@@ -3246,7 +3243,12 @@ window.ShadowDOMPolyfill = {};
   function Event(type, options) {
     if (type instanceof OriginalEvent) {
       var impl = type;
-      if (!OriginalBeforeUnloadEvent && impl.type === 'beforeunload') {
+      // In browsers that do not correctly support BeforeUnloadEvent we get to
+      // the generic Event wrapper but we still want to ensure we create a
+      // BeforeUnloadEvent. Since BeforeUnloadEvent calls super, we need to
+      // prevent reentrancty.
+      if (!OriginalBeforeUnloadEvent && impl.type === 'beforeunload' &&
+          !(this instanceof BeforeUnloadEvent)) {
         return new BeforeUnloadEvent(impl);
       }
       setWrapper(impl, this);
@@ -4508,6 +4510,7 @@ window.ShadowDOMPolyfill = {};
       return s;
     },
     set textContent(textContent) {
+      if (textContent == null) textContent = '';
       var removedNodes = snapshotNodeList(this.childNodes);
 
       if (this.invalidateShadowRenderer()) {
@@ -4610,6 +4613,8 @@ window.ShadowDOMPolyfill = {};
   scope.nodeWasRemoved = nodeWasRemoved;
   scope.nodesWereAdded = nodesWereAdded;
   scope.nodesWereRemoved = nodesWereRemoved;
+  scope.originalInsertBefore = originalInsertBefore;
+  scope.originalRemoveChild = originalRemoveChild;
   scope.snapshotNodeList = snapshotNodeList;
   scope.wrappers.Node = Node;
 
@@ -6714,7 +6719,7 @@ window.ShadowDOMPolyfill = {};
       refChildWrapper.previousSibling_ = refChildWrapper.previousSibling;
     }
 
-    parentNode.insertBefore(newChild, refChild);
+    scope.originalInsertBefore.call(parentNode, newChild, refChild);
   }
 
   function remove(nodeWrapper) {
@@ -6736,7 +6741,7 @@ window.ShadowDOMPolyfill = {};
     if (parentNodeWrapper.firstChild === nodeWrapper)
       parentNodeWrapper.firstChild_ = nodeWrapper;
 
-    parentNode.removeChild(node);
+    scope.originalRemoveChild.call(parentNode, node);
   }
 
   var distributedNodesTable = new WeakMap();
@@ -6939,7 +6944,7 @@ window.ShadowDOMPolyfill = {};
 
     // http://w3c.github.io/webcomponents/spec/shadow/#distribution-algorithms
     distribution: function(root) {
-      this.resetAll(root);
+      this.resetAllSubtrees(root);
       this.distributionResolution(root);
     },
 
@@ -6949,6 +6954,10 @@ window.ShadowDOMPolyfill = {};
       else
         resetDestinationInsertionPoints(node);
 
+      this.resetAllSubtrees(node);
+    },
+
+    resetAllSubtrees: function(node) {
       for (var child = node.firstChild; child; child = child.nextSibling) {
         this.resetAll(child);
       }
@@ -7889,6 +7898,7 @@ window.ShadowDOMPolyfill = {};
   var unwrap = scope.unwrap;
 
   var OriginalFormData = window.FormData;
+  if (!OriginalFormData) return;
 
   function FormData(formElement) {
     var impl;
@@ -7903,6 +7913,26 @@ window.ShadowDOMPolyfill = {};
   registerWrapper(OriginalFormData, FormData, new OriginalFormData());
 
   scope.wrappers.FormData = FormData;
+
+})(window.ShadowDOMPolyfill);
+
+/*
+ * Copyright 2014 The Polymer Authors. All rights reserved.
+ * Use of this source code is goverened by a BSD-style
+ * license that can be found in the LICENSE file.
+ */
+
+(function(scope) {
+  'use strict';
+
+  var unwrapIfNeeded = scope.unwrapIfNeeded;
+  var originalSend = XMLHttpRequest.prototype.send;
+
+  // Since we only need to adjust XHR.send, we just patch it instead of wrapping
+  // the entire object. This happens when FormData is passed.
+  XMLHttpRequest.prototype.send = function(obj) {
+    return originalSend.call(this, unwrapIfNeeded(obj));
+  };
 
 })(window.ShadowDOMPolyfill);
 
@@ -9485,6 +9515,30 @@ scope.ShadowCSS = ShadowCSS;
       if ('#' == hash[0])
         hash = hash.slice(1);
       parse.call(this, hash, 'fragment');
+    },
+
+    get origin() {
+      var host;
+      if (this._isInvalid || !this._scheme) {
+        return '';
+      }
+      // javascript: Gecko returns String(""), WebKit/Blink String("null")
+      // Gecko throws error for "data://"
+      // data: Gecko returns "", Blink returns "data://", WebKit returns "null"
+      // Gecko returns String("") for file: mailto:
+      // WebKit/Blink returns String("SCHEME://") for file: mailto:
+      switch (this._scheme) {
+        case 'data':
+        case 'file':
+        case 'javascript':
+        case 'mailto':
+          return 'null';
+      }
+      host = this.host;
+      if (!host) {
+        return '';
+      }
+      return this._scheme + '://' + host;
     }
   };
 
@@ -9529,96 +9583,6 @@ if (!Function.prototype.bind) {
     };
   };
 }
-
-})(window.Platform);
-
-/*
- * Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
- * The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
- * The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
- * Code distributed by Google as part of the polymer project is also
- * subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
- */
-
-(function(scope) {
-
-  'use strict';
-
-  // polyfill performance.now
-
-  if (!window.performance) {
-    var start = Date.now();
-    // only at millisecond precision
-    window.performance = {now: function(){ return Date.now() - start }};
-  }
-
-  // polyfill for requestAnimationFrame
-
-  if (!window.requestAnimationFrame) {
-    window.requestAnimationFrame = (function() {
-      var nativeRaf = window.webkitRequestAnimationFrame ||
-        window.mozRequestAnimationFrame;
-
-      return nativeRaf ?
-        function(callback) {
-          return nativeRaf(function() {
-            callback(performance.now());
-          });
-        } :
-        function( callback ){
-          return window.setTimeout(callback, 1000 / 60);
-        };
-    })();
-  }
-
-  if (!window.cancelAnimationFrame) {
-    window.cancelAnimationFrame = (function() {
-      return  window.webkitCancelAnimationFrame ||
-        window.mozCancelAnimationFrame ||
-        function(id) {
-          clearTimeout(id);
-        };
-    })();
-  }
-
-  // Make a stub for Polymer() for polyfill purposes; under the HTMLImports
-  // polyfill, scripts in the main document run before imports. That means
-  // if (1) polymer is imported and (2) Polymer() is called in the main document
-  // in a script after the import, 2 occurs before 1. We correct this here
-  // by specfiically patching Polymer(); this is not necessary under native
-  // HTMLImports.
-  var elementDeclarations = [];
-
-  var polymerStub = function(name, dictionary) {
-    Array.prototype.push.call(arguments, document._currentScript);
-    elementDeclarations.push(arguments);
-  };
-  window.Polymer = polymerStub;
-
-  // deliver queued delcarations
-  scope.consumeDeclarations = function(callback) {
-    scope.consumeDeclarations = function() {
-     throw 'Possible attempt to load Polymer twice';
-    };
-    if (callback) {
-      callback(elementDeclarations);
-    }
-    elementDeclarations = null;
-  };
-
-  // Once DOMContent has loaded, any main document scripts that depend on
-  // Polymer() should have run. Calling Polymer() now is an error until
-  // polymer is imported.
-  window.addEventListener('DOMContentLoaded', function() {
-    if (window.Polymer === polymerStub) {
-      window.Polymer = function() {
-        console.error('You tried to use polymer without loading it first. To ' +
-          'load polymer, <link rel="import" href="' + 
-          'components/polymer/polymer.html">');
-      };
-    }
-  });
 
 })(window.Platform);
 
@@ -10189,17 +10153,18 @@ window.HTMLImports = window.HTMLImports || {flags:{}};
 
 (function(scope) {
 
-var hasNative = ('import' in document.createElement('link'));
+var IMPORT_LINK_TYPE = 'import';
+var hasNative = (IMPORT_LINK_TYPE in document.createElement('link'));
 var useNative = hasNative;
-
-isIE = /Trident/.test(navigator.userAgent);
+var isIE = /Trident/.test(navigator.userAgent);
 
 // TODO(sorvell): SD polyfill intrusion
 var hasShadowDOMPolyfill = Boolean(window.ShadowDOMPolyfill);
 var wrap = function(node) {
   return hasShadowDOMPolyfill ? ShadowDOMPolyfill.wrapIfNeeded(node) : node;
 };
-var mainDoc = wrap(document);
+
+var rootDocument = wrap(document);
     
 // NOTE: We cannot polyfill document.currentScript because it's not possible
 // both to override and maintain the ability to capture the native value;
@@ -10219,14 +10184,14 @@ var currentScriptDescriptor = {
 };
 
 Object.defineProperty(document, '_currentScript', currentScriptDescriptor);
-Object.defineProperty(mainDoc, '_currentScript', currentScriptDescriptor);
+Object.defineProperty(rootDocument, '_currentScript', currentScriptDescriptor);
 
 // call a callback when all HTMLImports in the document at call (or at least
 //  document ready) time have loaded.
 // 1. ensure the document is in a ready state (has dom), then 
 // 2. watch for loading of imports and call callback when done
-function whenImportsReady(callback, doc) {
-  doc = doc || mainDoc;
+function whenReady(callback, doc) {
+  doc = doc || rootDocument;
   // if document is loading, wait and try again
   whenDocumentReady(function() {
     watchImportsLoad(callback, doc);
@@ -10266,8 +10231,8 @@ function watchImportsLoad(callback, doc) {
   var imports = doc.querySelectorAll('link[rel=import]');
   var loaded = 0, l = imports.length;
   function checkDone(d) { 
-    if (loaded == l) {
-      callback && callback();
+    if ((loaded == l) && callback) {
+       callback();
     }
   }
   function loadedImport(e) {
@@ -10291,8 +10256,14 @@ function watchImportsLoad(callback, doc) {
 
 // NOTE: test for native imports loading is based on explicitly watching
 // all imports (see below).
+// We cannot rely on this entirely without watching the entire document
+// for import links. For perf reasons, currently only head is watched.
+// Instead, we fallback to checking if the import property is available 
+// and the document is not itself loading. 
 function isImportLoaded(link) {
-  return useNative ? link.__loaded : link.__importParsed;
+  return useNative ? link.__loaded || 
+      (link.import && link.import.readyState !== 'loading') :
+      link.__importParsed;
 }
 
 // TODO(sorvell): Workaround for 
@@ -10354,10 +10325,10 @@ if (useNative) {
 // have loaded. This event is required to simulate the script blocking 
 // behavior of native imports. A main document script that needs to be sure
 // imports have loaded should wait for this event.
-whenImportsReady(function() {
+whenReady(function() {
   HTMLImports.ready = true;
   HTMLImports.readyTime = new Date().getTime();
-  mainDoc.dispatchEvent(
+  rootDocument.dispatchEvent(
     new CustomEvent('HTMLImportsLoaded', {bubbles: true})
   );
 });
@@ -10365,11 +10336,10 @@ whenImportsReady(function() {
 // exports
 scope.useNative = useNative;
 scope.isImportLoaded = isImportLoaded;
-scope.whenReady = whenImportsReady;
+scope.whenReady = whenReady;
+scope.rootDocument = rootDocument;
+scope.IMPORT_LINK_TYPE = IMPORT_LINK_TYPE;
 scope.isIE = isIE;
-
-// deprecated
-scope.whenImportsReady = whenImportsReady;
 
 })(window.HTMLImports);
 /*
@@ -10400,6 +10370,7 @@ scope.whenImportsReady = whenImportsReady;
   };
 
   Loader.prototype = {
+
     addNodes: function(nodes) {
       // number of transactions to complete
       this.inflight += nodes.length;
@@ -10410,6 +10381,7 @@ scope.whenImportsReady = whenImportsReady;
       // anything to do?
       this.checkDone();
     },
+
     addNode: function(node) {
       // number of transactions to complete
       this.inflight++;
@@ -10418,6 +10390,7 @@ scope.whenImportsReady = whenImportsReady;
       // anything to do?
       this.checkDone();
     },
+
     require: function(elt) {
       var url = elt.src || elt.href;
       // ensure we have a standard url that can be used
@@ -10430,6 +10403,7 @@ scope.whenImportsReady = whenImportsReady;
         this.fetch(url, elt);
       }
     },
+
     dedupe: function(url, elt) {
       if (this.pending[url]) {
         // add to list of nodes waiting for inUrl
@@ -10450,6 +10424,7 @@ scope.whenImportsReady = whenImportsReady;
       // need fetch (not a dupe)
       return false;
     },
+
     fetch: function(url, elt) {
       flags.load && console.log('fetch', url, elt);
       if (url.match(/^data:/)) {
@@ -10485,6 +10460,7 @@ scope.whenImportsReady = whenImportsReady;
         */
       }
     },
+
     receive: function(url, elt, err, resource, redirectedUrl) {
       this.cache[url] = resource;
       var $p = this.pending[url];
@@ -10496,24 +10472,29 @@ scope.whenImportsReady = whenImportsReady;
       }
       this.pending[url] = null;
     },
+
     tail: function() {
       --this.inflight;
       this.checkDone();
     },
+
     checkDone: function() {
       if (!this.inflight) {
         this.oncomplete();
       }
     }
+
   };
 
   xhr = xhr || {
     async: true,
+
     ok: function(request) {
       return (request.status >= 200 && request.status < 300)
           || (request.status === 304)
           || (request.status === 0);
     },
+
     load: function(url, next, nextContext) {
       var request = new XMLHttpRequest();
       if (scope.flags.debug || scope.flags.bust) {
@@ -10538,9 +10519,11 @@ scope.whenImportsReady = whenImportsReady;
       request.send();
       return request;
     },
+
     loadDocument: function(url, next, nextContext) {
       this.load(url, next, nextContext).responseType = 'document';
     }
+    
   };
 
   // exports
@@ -10559,12 +10542,11 @@ scope.whenImportsReady = whenImportsReady;
  */
 (function(scope) {
 
-var IMPORT_LINK_TYPE = 'import';
+// imports
+var rootDocument = scope.rootDocument;
 var flags = scope.flags;
 var isIE = scope.isIE;
-// TODO(sorvell): SD polyfill intrusion
-var mainDoc = window.ShadowDOMPolyfill ? 
-    window.ShadowDOMPolyfill.wrapIfNeeded(document) : document;
+var IMPORT_LINK_TYPE = scope.IMPORT_LINK_TYPE;
 
 // importParser
 // highlander object to manage parsing of imports
@@ -10575,8 +10557,10 @@ var mainDoc = window.ShadowDOMPolyfill ?
 
 // highlander object for parsing a document tree
 var importParser = {
+
   // parse selectors for main document elements
   documentSelectors: 'link[rel=' + IMPORT_LINK_TYPE + ']',
+
   // parse selectors for import document elements
   importsSelectors: [
     'link[rel=' + IMPORT_LINK_TYPE + ']',
@@ -10585,11 +10569,15 @@ var importParser = {
     'script:not([type])',
     'script[type="text/javascript"]'
   ].join(','),
+
   map: {
     link: 'parseLink',
     script: 'parseScript',
     style: 'parseStyle'
   },
+
+  dynamicElements: [],
+
   // try to parse the next import in the tree
   parseNext: function() {
     var next = this.nextToParse();
@@ -10597,6 +10585,7 @@ var importParser = {
       this.parse(next);
     }
   },
+
   parse: function(elt) {
     if (this.isParsed(elt)) {
       flags.parse && console.log('[%s] is already parsed', elt.localName);
@@ -10608,6 +10597,14 @@ var importParser = {
       fn.call(this, elt);
     }
   },
+
+  parseDynamic: function(elt, quiet) {
+    this.dynamicElements.push(elt);
+    if (!quiet) {
+      this.parseNext();
+    }
+  },
+
   // only 1 element may be parsed at a time; parsing is async so each
   // parsing implementation must inform the system that parsing is complete
   // via markParsingComplete.
@@ -10620,29 +10617,25 @@ var importParser = {
     flags.parse && console.log('parsing', elt);
     this.parsingElement = elt;
   },
+
   markParsingComplete: function(elt) {
     elt.__importParsed = true;
+    this.markDynamicParsingComplete(elt);
     if (elt.__importElement) {
       elt.__importElement.__importParsed = true;
+      this.markDynamicParsingComplete(elt.__importElement);
     }
     this.parsingElement = null;
     flags.parse && console.log('completed', elt);
   },
-  invalidateParse: function(doc) {
-    if (doc && doc.__importLink) {
-      doc.__importParsed = doc.__importLink.__importParsed = false;
-      this.parseSoon();
+
+  markDynamicParsingComplete: function(elt) {
+    var i = this.dynamicElements.indexOf(elt);
+    if (i >= 0) {
+      this.dynamicElements.splice(i, 1);
     }
   },
-  parseSoon: function() {
-    if (this._parseSoon) {
-      cancelAnimationFrame(this._parseDelay);
-    }
-    var parser = this;
-    this._parseSoon = requestAnimationFrame(function() {
-      parser.parseNext();
-    });
-  },
+
   parseImport: function(elt) {
     // TODO(sorvell): consider if there's a better way to do this;
     // expose an imports parsing hook; this is needed, for example, by the
@@ -10673,6 +10666,7 @@ var importParser = {
     }
     this.parseNext();
   },
+
   parseLink: function(linkElt) {
     if (nodeIsImport(linkElt)) {
       this.parseImport(linkElt);
@@ -10682,6 +10676,7 @@ var importParser = {
       this.parseGeneric(linkElt);
     }
   },
+
   parseStyle: function(elt) {
     // TODO(sorvell): style element load event can just not fire so clone styles
     var src = elt;
@@ -10689,10 +10684,12 @@ var importParser = {
     elt.__importElement = src;
     this.parseGeneric(elt);
   },
+
   parseGeneric: function(elt) {
     this.trackElement(elt);
     this.addElementToDocument(elt);
   },
+
   rootImportForElement: function(elt) {
     var n = elt;
     while (n.ownerDocument.__importLink) {
@@ -10700,6 +10697,7 @@ var importParser = {
     }
     return n;
   },
+
   addElementToDocument: function(elt) {
     var port = this.rootImportForElement(elt.__importElement || elt);
     var l = port.__insertedElements = port.__insertedElements || 0;
@@ -10709,6 +10707,7 @@ var importParser = {
     }
     port.parentNode.insertBefore(elt, refNode);
   },
+
   // tracks when a loadable element has loaded
   trackElement: function(elt, callback) {
     var self = this;
@@ -10748,6 +10747,7 @@ var importParser = {
       }
     }
   },
+
   // NOTE: execute scripts by injecting them and watching for the load/error
   // event. Inline scripts are handled via dataURL's because browsers tend to
   // provide correct parsing errors in this case. If this has any compatibility
@@ -10766,12 +10766,19 @@ var importParser = {
     });
     this.addElementToDocument(script);
   },
+
   // determine the next element in the tree which should be parsed
   nextToParse: function() {
-    return !this.parsingElement && this.nextToParseInDoc(mainDoc);
+    this._mayParse = [];
+    return !this.parsingElement && (this.nextToParseInDoc(rootDocument) || 
+        this.nextToParseDynamic());
   },
+
   nextToParseInDoc: function(doc, link) {
-    if (doc) {
+    // use `marParse` list to avoid looping into the same document again
+    // since it could cause an iloop.
+    if (doc && this._mayParse.indexOf(doc) < 0) {
+      this._mayParse.push(doc);
       var nodes = doc.querySelectorAll(this.parseSelectorsForNode(doc));
       for (var i=0, l=nodes.length, p=0, n; (i<l) && (n=nodes[i]); i++) {
         if (!this.isParsed(n)) {
@@ -10786,20 +10793,33 @@ var importParser = {
     // all nodes have been parsed, ready to parse import, if any
     return link;
   },
+
+  nextToParseDynamic: function() {
+    return this.dynamicElements[0];
+  },
+
   // return the set of parse selectors relevant for this node.
   parseSelectorsForNode: function(node) {
     var doc = node.ownerDocument || node;
-    return doc === mainDoc ? this.documentSelectors : this.importsSelectors;
+    return doc === rootDocument ? this.documentSelectors :
+        this.importsSelectors;
   },
+
   isParsed: function(node) {
     return node.__importParsed;
   },
+
+  needsDynamicParsing: function(elt) {
+    return (this.dynamicElements.indexOf(elt) >= 0);
+  },
+
   hasResource: function(node) {
     if (nodeIsImport(node) && (node.import === undefined)) {
       return false;
     }
     return true;
   }
+
 };
 
 function nodeIsImport(elt) {
@@ -10849,17 +10869,20 @@ var CSS_URL_REGEXP = /(url\()([^)]*)(\))/g;
 var CSS_IMPORT_REGEXP = /(@import[\s]+(?!url\())([^;]*)(;)/g;
 
 var path = {
+
   resolveUrlsInStyle: function(style) {
     var doc = style.ownerDocument;
     var resolver = doc.createElement('a');
     style.textContent = this.resolveUrlsInCssText(style.textContent, resolver);
     return style;  
   },
+
   resolveUrlsInCssText: function(cssText, urlObj) {
     var r = this.replaceUrls(cssText, urlObj, CSS_URL_REGEXP);
     r = this.replaceUrls(r, urlObj, CSS_IMPORT_REGEXP);
     return r;
   },
+
   replaceUrls: function(text, urlObj, regexp) {
     return text.replace(regexp, function(m, pre, url, post) {
       var urlPath = url.replace(/["']/g, '');
@@ -10868,7 +10891,8 @@ var path = {
       return pre + '\'' + urlPath + '\'' + post;
     });    
   }
-}
+
+};
 
 // exports
 scope.parser = importParser;
@@ -10886,17 +10910,15 @@ scope.path = path;
  */
  (function(scope) {
 
+// imports
 var useNative = scope.useNative;
 var flags = scope.flags;
-var IMPORT_LINK_TYPE = 'import';
-
-// TODO(sorvell): SD polyfill intrusion
-var mainDoc = window.ShadowDOMPolyfill ? 
-    ShadowDOMPolyfill.wrapIfNeeded(document) : document;
+var IMPORT_LINK_TYPE = scope.IMPORT_LINK_TYPE;
 
 if (!useNative) {
 
   // imports
+  var rootDocument = scope.rootDocument;
   var xhr = scope.xhr;
   var Loader = scope.Loader;
   var parser = scope.parser;
@@ -10908,32 +10930,40 @@ if (!useNative) {
   // - loads any linked import documents (with deduping)
 
   var importer = {
+
     documents: {},
+    
     // nodes to load in the mian document
     documentPreloadSelectors: 'link[rel=' + IMPORT_LINK_TYPE + ']',
+    
     // nodes to load in imports
     importsPreloadSelectors: [
       'link[rel=' + IMPORT_LINK_TYPE + ']'
     ].join(','),
+    
     loadNode: function(node) {
       importLoader.addNode(node);
     },
+    
     // load all loadable elements within the parent element
     loadSubtree: function(parent) {
       var nodes = this.marshalNodes(parent);
       // add these nodes to loader's queue
       importLoader.addNodes(nodes);
     },
+    
     marshalNodes: function(parent) {
       // all preloadable nodes in inDocument
       return parent.querySelectorAll(this.loadSelectorsForNode(parent));
     },
+    
     // find the proper set of load selectors for a given node
     loadSelectorsForNode: function(node) {
       var doc = node.ownerDocument || node;
-      return doc === mainDoc ? this.documentPreloadSelectors :
+      return doc === rootDocument ? this.documentPreloadSelectors :
           this.importsPreloadSelectors;
     },
+    
     loaded: function(url, elt, resource, err, redirectedUrl) {
       flags.load && console.log('loaded', url, elt);
       // store generic resource
@@ -10962,14 +10992,17 @@ if (!useNative) {
       }
       parser.parseNext();
     },
+    
     bootDocument: function(doc) {
       this.loadSubtree(doc);
       this.observe(doc);
       parser.parseNext();
     },
+    
     loadedAll: function() {
       parser.parseNext();
     }
+
   };
 
   // loader singleton
@@ -11037,7 +11070,7 @@ if (!useNative) {
     };
 
     Object.defineProperty(document, 'baseURI', baseURIDescriptor);
-    Object.defineProperty(mainDoc, 'baseURI', baseURIDescriptor);
+    Object.defineProperty(rootDocument, 'baseURI', baseURIDescriptor);
   }
 
   // IE shim for CustomEvent
@@ -11062,7 +11095,6 @@ scope.importer = importer;
 scope.IMPORT_LINK_TYPE = IMPORT_LINK_TYPE;
 scope.importLoader = importLoader;
 
-
 })(window.HTMLImports);
 
 /*
@@ -11075,10 +11107,13 @@ scope.importLoader = importLoader;
  */
 (function(scope){
 
+// imports
 var IMPORT_LINK_TYPE = scope.IMPORT_LINK_TYPE;
-var importSelector = 'link[rel=' + IMPORT_LINK_TYPE + ']';
 var importer = scope.importer;
 var parser = scope.parser;
+
+var importSelector = 'link[rel=' + IMPORT_LINK_TYPE + ']';
+
 
 // we track mutations for addedNodes, looking for imports
 function handler(mutations) {
@@ -11090,30 +11125,38 @@ function handler(mutations) {
 }
 
 // find loadable elements and add them to the importer
+// IFF the owning document has already parsed, then parsable elements
+// need to be marked for dynamic parsing.
 function addedNodes(nodes) {
-  var owner;
-  for (var i=0, l=nodes.length, n; (i<l) && (n=nodes[i]); i++) {
-    owner = owner || n.ownerDocument;
-    if (shouldLoadNode(n)) {
+  var owner, parsed;
+  for (var i=0, l=nodes.length, n, loading; (i<l) && (n=nodes[i]); i++) {
+    if (!owner) {
+      owner = n.ownerDocument;
+      parsed = parser.isParsed(owner);
+    }
+    // note: the act of loading kicks the parser, so we use parseDynamic's
+    // 2nd argument to control if this added node needs to kick the parser.
+    loading = shouldLoadNode(n);
+    if (loading) {
       importer.loadNode(n);
+    }
+    if (shouldParseNode(n) && parsed) {
+      parser.parseDynamic(n, loading);
     }
     if (n.children && n.children.length) {
       addedNodes(n.children);
     }
   }
-  // TODO(sorvell): This is not the right approach here. We shouldn't need to
-  // invalidate parsing when an element is added. Disabling this code 
-  // until a better approach is found.
-  /*
-  if (owner) {
-    parser.invalidateParse(owner);
-  }
-  */
 }
 
 function shouldLoadNode(node) {
   return (node.nodeType === 1) && matches.call(node,
       importer.loadSelectorsForNode(node));
+}
+
+function shouldParseNode(node) {
+  return (node.nodeType === 1) && matches.call(node,
+      parser.parseSelectorsForNode(node));  
 }
 
 // x-plat matches
@@ -11429,10 +11472,7 @@ function watchShadow(node) {
 }
 
 function watchRoot(root) {
-  if (!root.__watched) {
-    observe(root);
-    root.__watched = true;
-  }
+  observe(root);
 }
 
 function handler(mutations) {
@@ -11477,18 +11517,32 @@ function handler(mutations) {
   logFlags.dom && console.groupEnd();
 };
 
-var observer = new MutationObserver(handler);
+function takeRecords(node) {
+  // If the optional node is not supplied, assume we mean the whole document.
+  if (!node) node = wrapIfNeeded(document);
 
-function takeRecords() {
-  // TODO(sjmiles): ask Raf why we have to call handler ourselves
-  handler(observer.takeRecords());
-  takeMutations();
+  // Find the root of the tree, which will be an Document or ShadowRoot.
+  while (node.parentNode) {
+    node = node.parentNode;
+  }
+
+  var observer = node.__observer;
+  if (observer) {
+    handler(observer.takeRecords());
+    takeMutations();
+  }
 }
 
 var forEach = Array.prototype.forEach.call.bind(Array.prototype.forEach);
 
 function observe(inRoot) {
+  if (inRoot.__observer) return;
+
+  // For each ShadowRoot, we create a new MutationObserver, so the root can be
+  // garbage collected once all references to the `inRoot` node are gone.
+  var observer = new MutationObserver(handler);
   observer.observe(inRoot, {childList: true, subtree: true});
+  inRoot.__observer = observer;
 }
 
 function observeDocument(doc) {
@@ -11501,14 +11555,34 @@ function upgradeDocument(doc) {
   logFlags.dom && console.groupEnd();
 }
 
+/*
+This method is intended to be called when the document tree (including imports)
+has pending custom elements to upgrade. It can be called multiple times and 
+should do nothing if no elements are in need of upgrade.
+
+Note that the import tree can consume itself and therefore special care
+must be taken to avoid recursion.
+*/
+var upgradedDocuments;
 function upgradeDocumentTree(doc) {
+  upgradedDocuments = [];
+  _upgradeDocumentTree(doc);
+  upgradedDocuments = null;
+}
+
+
+function _upgradeDocumentTree(doc) {
   doc = wrapIfNeeded(doc);
+  if (upgradedDocuments.indexOf(doc) >= 0) {
+    return;
+  }
+  upgradedDocuments.push(doc);
   //console.log('upgradeDocumentTree: ', (doc.baseURI).split('/').pop());
   // upgrade contained imported documents
   var imports = doc.querySelectorAll('link[rel=' + IMPORT_LINK_TYPE + ']');
   for (var i=0, l=imports.length, n; (i<l) && (n=imports[i]); i++) {
     if (n.import && n.import.__parsed) {
-      upgradeDocumentTree(n.import);
+      _upgradeDocumentTree(n.import);
     }
   }
   upgradeDocument(doc);
@@ -12191,20 +12265,120 @@ if (window.ShadowDOMPolyfill) {
 
 (function(scope) {
 
-  // TODO(sorvell): It's desireable to provide a default stylesheet 
+  'use strict';
+
+  // polyfill performance.now
+
+  if (!window.performance) {
+    var start = Date.now();
+    // only at millisecond precision
+    window.performance = {now: function(){ return Date.now() - start }};
+  }
+
+  // polyfill for requestAnimationFrame
+
+  if (!window.requestAnimationFrame) {
+    window.requestAnimationFrame = (function() {
+      var nativeRaf = window.webkitRequestAnimationFrame ||
+        window.mozRequestAnimationFrame;
+
+      return nativeRaf ?
+        function(callback) {
+          return nativeRaf(function() {
+            callback(performance.now());
+          });
+        } :
+        function( callback ){
+          return window.setTimeout(callback, 1000 / 60);
+        };
+    })();
+  }
+
+  if (!window.cancelAnimationFrame) {
+    window.cancelAnimationFrame = (function() {
+      return  window.webkitCancelAnimationFrame ||
+        window.mozCancelAnimationFrame ||
+        function(id) {
+          clearTimeout(id);
+        };
+    })();
+  }
+
+  // Make a stub for Polymer() for polyfill purposes; under the HTMLImports
+  // polyfill, scripts in the main document run before imports. That means
+  // if (1) polymer is imported and (2) Polymer() is called in the main document
+  // in a script after the import, 2 occurs before 1. We correct this here
+  // by specfiically patching Polymer(); this is not necessary under native
+  // HTMLImports.
+  var elementDeclarations = [];
+
+  var polymerStub = function(name, dictionary) {
+    if ((typeof name !== 'string') && (arguments.length === 1)) {
+      Array.prototype.push.call(arguments, document._currentScript);
+    }
+    elementDeclarations.push(arguments);
+  };
+  window.Polymer = polymerStub;
+
+  // deliver queued delcarations
+  scope.consumeDeclarations = function(callback) {
+    scope.consumeDeclarations = function() {
+     throw 'Possible attempt to load Polymer twice';
+    };
+    if (callback) {
+      callback(elementDeclarations);
+    }
+    elementDeclarations = null;
+  };
+
+  function installPolymerWarning() {
+    if (window.Polymer === polymerStub) {
+      window.Polymer = function() {
+        throw new Error('You tried to use polymer without loading it first. To ' +
+          'load polymer, <link rel="import" href="' + 
+          'components/polymer/polymer.html">');
+      };
+    }
+  }
+
+  // Once DOMContent has loaded, any main document scripts that depend on
+  // Polymer() should have run. Calling Polymer() now is an error until
+  // polymer is imported.
+  if (HTMLImports.useNative) {
+    installPolymerWarning();
+  } else {
+    addEventListener('DOMContentLoaded', installPolymerWarning);
+  }
+
+})(window.Platform);
+
+/*
+ * Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
+ * This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+ * The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+ * The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+ * Code distributed by Google as part of the polymer project is also
+ * subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+ */
+
+(function(scope) {
+
+  // It's desireable to provide a default stylesheet 
   // that's convenient for styling unresolved elements, but
   // it's cumbersome to have to include this manually in every page.
   // It would make sense to put inside some HTMLImport but 
   // the HTMLImports polyfill does not allow loading of stylesheets 
   // that block rendering. Therefore this injection is tolerated here.
-
+  //
+  // NOTE: position: relative fixes IE's failure to inherit opacity 
+  // when a child is not statically positioned.
   var style = document.createElement('style');
   style.textContent = ''
       + 'body {'
       + 'transition: opacity ease-in 0.2s;' 
       + ' } \n'
       + 'body[unresolved] {'
-      + 'opacity: 0; display: block; overflow: hidden;' 
+      + 'opacity: 0; display: block; overflow: hidden; position: relative;' 
       + ' } \n'
       ;
   var head = document.querySelector('head');

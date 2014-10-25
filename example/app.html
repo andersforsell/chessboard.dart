@@ -310,6 +310,9 @@ html /deep/ [segment], html /deep/ segment {
 
 
 <!-- import core elements -->
+<script src="packages/web_components/interop_support.js"></script>
+
+<!-- Dart note: load polymer for Dart and JS from the same place -->
 
 <script>
 // This empty script is here to workaround issue
@@ -746,7 +749,9 @@ html /deep/ core-icon {
 </polymer-element>
 
 
-<style shim-shadowdom="">/*
+<polymer-element name="core-item" attributes="label icon src" horizontal="" center="" layout="">
+<template>
+  <style>/*
 Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
 This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
 The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
@@ -755,32 +760,33 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-html /deep/ core-item {
+:host {
   display: block;
   position: relative;
   min-height: 40px;
   white-space: nowrap;
 }
 
-html /deep/ core-item.font-scalable {
+:host(.font-scalable) {
   min-height: 2.5em;
 }
 
-html /deep/ core-item.core-selected {
+:host(.core-selected) {
   font-weight: bold;
 }
 
-html /deep/ core-item::shadow core-icon {
+#icon {
   margin: 0 16px 0 4px;
 }
 
-html /deep/ core-item.font-scalable::shadow core-icon {
+:host(.font-scalable) #icon {
   margin: 0 1em 0 0.25em;
   height: 1.5em;
   width: 1.5em;
 }
 
-html /deep/ core-item::shadow ::content > a {
+polyfill-next-selector { content: ':host > a'; }
+::content > a {
   position: absolute;
   top: 0;
   right: 0;
@@ -791,14 +797,11 @@ html /deep/ core-item::shadow ::content > a {
   background-color: rgba(0, 0, 0, 0.000001);
 }
 </style>
-
-<polymer-element name="core-item" attributes="label icon src" horizontal="" center="" layout="">
-<template>
-
-  <core-icon src="{{src}}" icon="{{icon}}" hidden?="{{!src &amp;&amp; !icon}}"></core-icon>
+  <template if="{{icon || src}}">
+    <core-icon src="{{src}}" id="icon" icon="{{icon}}" hidden?="{{!src &amp;&amp; !icon}}"></core-icon>
+  </template>
   <div id="label">{{label}}</div>
   <content></content>
-  
 </template>
 <script>
 
@@ -893,19 +896,26 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 }
 
 /* narrow layout */
-:host(.narrow) {
+:host(.core-narrow),
+:host-context(.core-narrow) {
   height: 56px;
 }
 
-:host(.narrow.medium-tall) {
+polyfill-next-selector { content: ':host.core-narrow.medium-tall, .core-narrow :host.medium-tall'; }
+:host(.core-narrow.medium-tall),
+:host-context(.core-narrow):host(.medium-tall) {
   height: 112px;
 }
 
-:host(.narrow.tall) {
+polyfill-next-selector { content: ':host.core-narrow.tall, .core-narrow :host.tall'; }
+:host(.core-narrow.tall),
+:host-context(.core-narrow):host(.tall) {
   height: 168px;
 }
 
-:host(.narrow) .toolbar-tools {
+polyfill-next-selector { content: ':host.core-narrow .toolbar-tools, .core-narrow :host .toolbar-tools'; }
+:host(.core-narrow) .toolbar-tools,
+:host-context(.core-narrow) .toolbar-tools {
   height: 56px;
   padding: 0;
 }
@@ -940,7 +950,7 @@ polyfill-next-selector { content: '.toolbar-tools > *'; }
 /* elements spacing */
 polyfill-next-selector { content: '.toolbar-tools > *'; }
 ::content > * {
-  margin: 0px 8px;
+  margin: 0 8px;
 }
 
 /* misc helpers */
@@ -1003,9 +1013,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   right: 0;
   bottom: 0;
   left: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
 }
 
 #mainPanel {
@@ -1039,6 +1046,12 @@ mode: scroll
   overflow: visible;
 }
 
+:host([mode=scroll]) #outerContainer {
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
 /*
 mode: cover
 */
@@ -1059,19 +1072,19 @@ mode: cover
   width: 100%;
 }
 </style>
-  
-  <div id="outerContainer" on-scroll="{{scroll}}" vertical="" layout="">
+
+  <div id="outerContainer" vertical="" layout="">
 
     <content id="headerContent" select="core-toolbar, .core-header"></content>
 
     <div id="mainPanel" flex="" vertical="" layout="">
-    
-      <div id="mainContainer" flex?="{{mode !== 'cover'}}" on-scroll="{{scroll}}">
+
+      <div id="mainContainer" flex?="{{mode !== 'cover'}}">
         <content id="mainContent" select="*"></content>
       </div>
-      
+
       <div id="dropShadow"></div>
-      
+
     </div>
 
   </div>
@@ -1080,11 +1093,21 @@ mode: cover
 <script>
 
   Polymer('core-header-panel', {
-    
+
     /**
-     * Fired when the content has been scrolled.  `details.target` returns
+     * Fired when the content has been scrolled.  `event.detail.target` returns
      * the scrollable element which you can use to access scroll info such as
      * `scrollTop`.
+     *
+     *     <core-header-panel on-scroll="{{scrollHandler}}">
+     *       ...
+     *     </core-header-panel>
+     *
+     *
+     *     scrollHandler: function(event) {
+     *       var scroller = event.detail.target;
+     *       console.log(scroller.scrollTop);
+     *     }
      *
      * @event scroll
      */
@@ -1092,20 +1115,19 @@ mode: cover
     publish: {
       /**
        * Controls header and scrolling behavior. Options are
-       * `standard`, `seamed`, `waterfall`, `waterfall-tall`, 
-       * `waterfall-medium-tall`, `scroll` and `cover`.
-       * Default is `standard`.
+       * `standard`, `seamed`, `waterfall`, `waterfall-tall`, `scroll` and 
+       * `cover`. Default is `standard`.
        *
-       * `standard`: The header is a step above the panel. The header will consume the 
-       * panel at the point of entry, preventing it from passing through to the 
+       * `standard`: The header is a step above the panel. The header will consume the
+       * panel at the point of entry, preventing it from passing through to the
        * opposite side.
        *
        * `seamed`: The header is presented as seamed with the panel.
        *
-       * `waterfall`: Similar to standard mode, but header is initially presented as 
+       * `waterfall`: Similar to standard mode, but header is initially presented as
        * seamed with panel, but then separates to form the step.
        *
-       * `waterfall-tall`: The header is initially taller (`tall` class is added to 
+       * `waterfall-tall`: The header is initially taller (`tall` class is added to
        * the header).  As the user scrolls, the header separates (forming an edge)
        * while condensing (`tall` class is removed from the header).
        *
@@ -1123,7 +1145,7 @@ mode: cover
        *         margin: 60px 60px 60px 0;
        *       }
        *     </style>
-       * 
+       *
        *     <core-header-panel mode="cover">
        *       <core-appbar class="tall">
        *         <core-icon-button icon="menu"></core-icon-button>
@@ -1136,7 +1158,7 @@ mode: cover
        * @default ''
        */
       mode: {value: '', reflect: true},
-      
+
       /**
        * The class used in waterfall-tall mode.  Change this if the header
        * accepts a different class for toggling height, e.g. "medium-tall"
@@ -1146,7 +1168,7 @@ mode: cover
        * @default 'tall'
        */
       tallClass: 'tall',
-      
+
       /**
        * If true, the drop-shadow is always shown no matter what mode is set to.
        *
@@ -1156,12 +1178,57 @@ mode: cover
        */
       shadow: false
     },
+
+    animateDuration: 200,
+
+    modeConfigs: {
+      shadowMode: {'waterfall': 1, 'waterfall-tall': 1},
+      noShadow: {'seamed': 1, 'cover': 1, 'scroll': 1},
+      tallMode: {'waterfall-tall': 1},
+      outerScroll: {'scroll': 1}
+    },
     
+    ready: function() {
+      this.scrollHandler = this.scroll.bind(this);
+      this.addListener();
+    },
+    
+    detached: function() {
+      this.removeListener(this.mode);
+    },
+    
+    addListener: function() {
+      this.scroller.addEventListener('scroll', this.scrollHandler);
+    },
+    
+    removeListener: function(mode) {
+      var s = this.getScrollerForMode(mode);
+      s.removeEventListener('scroll', this.scrollHandler);
+    },
+
     domReady: function() {
       this.async('scroll');
     },
 
-    modeChanged: function() {
+    modeChanged: function(old) {
+      var header = this.header;
+      if (header) {
+        var configs = this.modeConfigs;
+        // in tallMode it may add tallClass to the header; so do the cleanup
+        // when mode is changed from tallMode to not tallMode
+        if (configs.tallMode[old] && !configs.tallMode[this.mode]) {
+          header.classList.remove(this.tallClass);
+          this.async(function() {
+            header.classList.remove('animate');
+          }, null, this.animateDuration);
+        } else {
+          header.classList.toggle('animate', configs.tallMode[this.mode]);
+        }
+      }
+      if (configs.outerScroll[this.mode] || configs.outerScroll[old]) {
+        this.removeListener(old);
+        this.addListener();
+      }
       this.scroll();
     },
 
@@ -1169,6 +1236,11 @@ mode: cover
       return this.$.headerContent.getDistributedNodes()[0];
     },
     
+    getScrollerForMode: function(mode) {
+      return this.modeConfigs.outerScroll[mode] ?
+          this.$.outerContainer : this.$.mainContainer;
+    },
+
     /**
      * Returns the scrollable element.
      *
@@ -1176,33 +1248,26 @@ mode: cover
      * @type Object
      */
     get scroller() {
-      return this.mode === 'scroll' ? 
-          this.$.outerContainer : this.$.mainContainer;
+      return this.getScrollerForMode(this.mode);
     },
-    
+
     scroll: function() {
-      var shadowMode = {'waterfall': 1, 'waterfall-tall': 1};
-      var noShadow = {'seamed': 1, 'cover': 1, 'scroll': 1};
-      var tallMode = {'waterfall-tall': 1};
-      
+      var configs = this.modeConfigs;
       var main = this.$.mainContainer;
       var header = this.header;
-      
+
       var sTop = main.scrollTop;
       var atTop = sTop === 0;
-      
-      if (header) {
-        this.$.dropShadow.classList.toggle('hidden', !this.shadow &&
-            (atTop && shadowMode[this.mode] || noShadow[this.mode]));
-        
-        if (tallMode[this.mode]) {
-          header.classList.toggle(this.tallClass, atTop || 
-              main.scrollHeight < this.$.outerContainer.offsetHeight);
-        }
-        
-        header.classList.toggle('animate', tallMode[this.mode]);
+
+      this.$.dropShadow.classList.toggle('hidden', !this.shadow &&
+          (atTop && configs.shadowMode[this.mode] || configs.noShadow[this.mode]));
+
+      if (header && configs.tallMode[this.mode]) {
+        header.classList.toggle(this.tallClass, atTop ||
+            header.classList.contains(this.tallClass) &&
+            main.scrollHeight < this.$.outerContainer.offsetHeight);
       }
-      
+
       this.fire('scroll', {target: this.scroller}, this, false);
     }
 
@@ -1688,7 +1753,7 @@ mode: cover
 </polymer-element>
 
 
-<polymer-element name="core-selector" attributes="selected multi valueattr selectedClass selectedProperty selectedAttribute selectedItem selectedModel selectedIndex notap target itemsSelector activateEvent">
+<polymer-element name="core-selector" attributes="selected multi valueattr selectedClass selectedProperty selectedAttribute selectedItem selectedModel selectedIndex notap excludedLocalNames target itemsSelector activateEvent">
 
   <template>
     <core-selection id="selection" multi="{{multi}}" on-core-select="{{selectionSelect}}"></core-selection>
@@ -1782,6 +1847,8 @@ mode: cover
       /**
        * Returns the currently selected element. In multi-selection this returns
        * an array of selected elements.
+       * Note that you should not use this to set the selection. Instead use
+       * `selected`.
        * 
        * @attribute selectedItem
        * @type Object
@@ -1792,6 +1859,8 @@ mode: cover
       /**
        * In single selection, this returns the model associated with the
        * selected element.
+       * Note that you should not use this to set the selection. Instead use 
+       * `selected`.
        * 
        * @attribute selectedModel
        * @type Object
@@ -1801,12 +1870,34 @@ mode: cover
 
       /**
        * In single selection, this returns the selected index.
+       * Note that you should not use this to set the selection. Instead use
+       * `selected`.
        *
        * @attribute selectedIndex
        * @type number
        * @default -1
        */
       selectedIndex: -1,
+
+      /**
+       * Nodes with local name that are in the list will not be included 
+       * in the selection items.  In the following example, `items` returns four
+       * `core-item`'s and doesn't include `h3` and `hr`.
+       *
+       *     <core-selector excludedLocalNames="h3 hr">
+       *       <h3>Header</h3>
+       *       <core-item>Item1</core-item>
+       *       <core-item>Item2</core-item>
+       *       <hr>
+       *       <core-item>Item3</core-item>
+       *       <core-item>Item4</core-item>
+       *     </core-selector>
+       *
+       * @attribute excludedLocalNames
+       * @type string
+       * @default ''
+       */
+      excludedLocalNames: '',
 
       /**
        * The target element that contains items.  If this is not set 
@@ -1820,7 +1911,8 @@ mode: cover
 
       /**
        * This can be used to query nodes from the target node to be used for 
-       * selection items.  Note this only works if the 'target' property is set.
+       * selection items.  Note this only works if `target` is set
+       * and is not `core-selector` itself.
        *
        * Example:
        *
@@ -1858,8 +1950,12 @@ mode: cover
        */
       notap: false,
 
+      defaultExcludedLocalNames: 'template',
+
       ready: function() {
         this.activateListener = this.activateHandler.bind(this);
+        this.itemFilter = this.filterItem.bind(this);
+        this.excludedLocalNamesChanged();
         this.observer = new MutationObserver(this.updateSelected.bind(this));
         if (!this.target) {
           this.target = this;
@@ -1878,9 +1974,22 @@ mode: cover
         var nodes = this.target !== this ? (this.itemsSelector ? 
             this.target.querySelectorAll(this.itemsSelector) : 
                 this.target.children) : this.$.items.getDistributedNodes();
-        return Array.prototype.filter.call(nodes || [], function(n) {
-          return n && n.localName !== 'template';
-        });
+        return Array.prototype.filter.call(nodes, this.itemFilter);
+      },
+
+      filterItem: function(node) {
+        return !this._excludedNames[node.localName];
+      },
+
+      excludedLocalNamesChanged: function() {
+        this._excludedNames = {};
+        var s = this.defaultExcludedLocalNames;
+        if (this.excludedLocalNames) {
+          s += ' ' + this.excludedLocalNames;
+        }
+        s.split(/\s+/g).forEach(function(n) {
+          this._excludedNames[n] = 1;
+        }, this);
       },
 
       targetChanged: function(old) {
@@ -2056,6 +2165,7 @@ mode: cover
         var item = this.items[index];
         if (item) {
           this.selected = this.valueForNode(item) || index;
+          return item;
         }
       },
       
@@ -2063,18 +2173,24 @@ mode: cover
        * Selects the previous item.  This should be used in single selection only.
        *
        * @method selectPrevious
+       * @param {boolean} wrap if true and it is already at the first item, wrap to the end
+       * @returns the previous item or undefined if there is none
        */
-      selectPrevious: function() {
-        this.selectIndex(this.selectedIndex - 1);
+      selectPrevious: function(wrap) {
+        var i = wrap && !this.selectedIndex ? this.items.length - 1 : this.selectedIndex - 1;
+        return this.selectIndex(i);
       },
       
       /**
        * Selects the next item.  This should be used in single selection only.
        *
        * @method selectNext
+       * @param {boolean} wrap if true and it is already at the last item, wrap to the front
+       * @returns the next item or undefined if there is none
        */
-      selectNext: function() {
-        this.selectIndex(this.selectedIndex + 1);
+      selectNext: function(wrap) {
+        var i = wrap && this.selectedIndex >= this.items.length - 1 ? 0 : this.selectedIndex + 1;
+        return this.selectIndex(i);
       }
       
     });
@@ -2082,7 +2198,10 @@ mode: cover
 </polymer-element>
 
 
-<style shim-shadowdom="">/*
+<polymer-element name="core-menu" extends="core-selector" noscript="">
+<template>
+
+  <style>/*
 Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
 This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
 The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
@@ -2091,18 +2210,21 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-html /deep/ core-menu {
+:host {
   display: block;
   margin: 12px;
 }
 
-polyfill-next-selector { content: 'core-menu > core-item'; }
-html /deep/ core-menu::shadow ::content > core-item {
+polyfill-next-selector { content: ':host > core-item'; }
+::content > core-item {
   cursor: default;
 }
 </style>
-
-<polymer-element name="core-menu" extends="core-selector" noscript=""></polymer-element>
+  
+  <shadow></shadow>
+  
+</template>
+</polymer-element>
 
 
 
@@ -2190,7 +2312,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   overflow: hidden;
 }
 
-#drawer {
+core-selector > #drawer {
   position: absolute;
   top: 0;
   left: 0;
@@ -2200,7 +2322,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   -mox-box-sizing: border-box;
 }
 
-.transition #drawer {
+.transition > #drawer {
   transition: -webkit-transform ease-in-out 0.3s, width ease-in-out 0.3s;
   transition: transform ease-in-out 0.3s, width ease-in-out 0.3s;
 }
@@ -2208,12 +2330,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 /*
 right-drawer: make drawer on the right side
 */
-.right-drawer #drawer {
+.right-drawer > #drawer {
   left: auto;
   right: 0;
 }
 
-.right-drawer.transition #drawer {
+.right-drawer.transition > #drawer {
   transition: -webkit-transform ease-in-out 0.3s, width ease-in-out 0.3s;
   transition: transform ease-in-out 0.3s, width ease-in-out 0.3s;
 }
@@ -2229,22 +2351,22 @@ polyfill-next-selector { content: ':host [drawer]'; }
   -moz-box-sizing: border-box;
 }
 
-#main {
+core-selector > #main {
   position: absolute;
   top: 0;
   right: 0;
   bottom: 0;
 }
 
-.transition #main {
+.transition > #main {
   transition: left ease-in-out 0.3s, padding ease-in-out 0.3s;
 }
 
-.right-drawer #main {
+.right-drawer > #main {
   left: 0;
 }
 
-.right-drawer.transition #main {
+.right-drawer.transition > #main {
   transition: right ease-in-out 0.3s, padding ease-in-out 0.3s;
 }
 
@@ -2303,7 +2425,7 @@ polyfill-next-selector { content: ':host .narrow-layout > #drawer > [drawer]'; }
   padding: 0;
 }
 
-.narrow-layout > #main:not(.core-selected) #scrim,
+.narrow-layout > #main:not(.core-selected) > #scrim,
 .dragging #scrim {
   visibility: visible;
   opacity: 1;
@@ -2604,16 +2726,18 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
 
 
 
-<script>
-// This empty script is here to workaround issue
-// https://github.com/dart-lang/core-elements/issues/11
-</script>
+<!-- Dart note: load polymer for Dart and JS from the same place -->
 
 <script>
 // This empty script is here to workaround issue
 // https://github.com/dart-lang/core-elements/issues/11
 </script>
 
+
+<script>
+// This empty script is here to workaround issue
+// https://github.com/dart-lang/core-elements/issues/11
+</script>
 
 
 
@@ -2695,7 +2819,6 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
 
       downAction: function() {
         this.pressed = true;
-        this.focused = false;
 
         if (this.isToggle) {
           this.active = !this.active;
@@ -2742,6 +2865,89 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
 </polymer-element>
 
 
+<polymer-element name="paper-button-base" extends="paper-focusable">
+
+  <script>
+    Polymer({
+
+      z: 1,
+
+      activeChanged: function() {
+        this.super();
+
+        if (this.active) {
+          // FIXME: remove when paper-ripple can have a default 'down' state.
+          if (!this.lastEvent) {
+            var rect = this.getBoundingClientRect();
+            this.lastEvent = {
+              x: rect.left + rect.width / 2,
+              y: rect.top + rect.height / 2
+            }
+          }
+          this.$.ripple.downAction(this.lastEvent);
+        } else {
+          this.$.ripple.upAction();
+        }
+        this.adjustZ();
+      },
+
+      disabledChanged: function() {
+        this.super();
+        if (this.disabled) {
+          this.setAttribute('aria-disabled', '');
+        } else {
+          this.removeAttribute('aria-disabled');
+        }
+        this.adjustZ();
+      },
+
+      recenteringTouchChanged: function() {
+        if (this.$.ripple) {
+          this.$.ripple.classList.toggle('recenteringTouch', this.recenteringTouch);
+        }
+      },
+
+      fillChanged: function() {
+        if (this.$.ripple) {
+          this.$.ripple.classList.toggle('fill', this.fill);
+        }
+      },
+
+      adjustZ: function() {
+        if (this.active) {
+          this.z = 2;
+        } else if (this.disabled) {
+          this.z = 0;
+        } else {
+          this.z = 1;
+        }
+      },
+
+      downAction: function(e) {
+        this.super(e);
+        this.lastEvent = e;
+        if (!this.$.ripple) {
+          var ripple = document.createElement('paper-ripple');
+          ripple.setAttribute('id', 'ripple');
+          ripple.setAttribute('fit', '');
+          if (this.recenteringTouch) {
+            ripple.classList.add('recenteringTouch');
+          }
+          if (!this.fill) {
+            ripple.classList.add('circle');
+          }
+          this.$.ripple = ripple;
+          this.shadowRoot.insertBefore(ripple, this.shadowRoot.firstChild);
+          // No need to forward the event to the ripple because the ripple
+          // is triggered in activeChanged
+        }
+      }
+
+    });
+  </script>
+</polymer-element>
+
+
 
 <polymer-element name="paper-ripple" attributes="initialOpacity opacityDecayVelocity">
 <template>
@@ -2751,9 +2957,15 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
     :host {
       display: block;
       position: relative;
+      border-radius: inherit;
+      overflow: hidden;
     }
 
-    #canvas {
+    :host-context([noink]) {
+      pointer-events: none;
+    }
+
+    #bg, #waves, .wave-container, .wave {
       pointer-events: none;
       position: absolute;
       top: 0;
@@ -2762,11 +2974,32 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
       height: 100%;
     }
 
-    :host(.circle) #canvas {
+    #bg, .wave {
+      opacity: 0;
+    }
+
+    #waves, .wave {
+      overflow: hidden;
+    }
+
+    .wave-container, .wave {
       border-radius: 50%;
     }
 
+    :host(.circle) #bg,
+    :host(.circle) #waves {
+      border-radius: 50%;
+    }
+
+    :host(.circle) .wave-container {
+      overflow: hidden;
+    }
+
   </style>
+
+  <div id="bg"></div>
+  <div id="waves">
+  </div>
 
 </template>
 <script>
@@ -2819,34 +3052,39 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
     // Determines whether the wave should be completely removed.
     function waveDidFinish(wave, radius, anim) {
       var waveOpacity = waveOpacityFn(wave.tDown, wave.tUp, anim);
+
       // If the wave opacity is 0 and the radius exceeds the bounds
       // of the element, then this is finished.
-      if (waveOpacity < 0.01 && radius >= Math.min(wave.maxRadius, waveMaxRadius)) {
-        return true;
-      }
-      return false;
+      return waveOpacity < 0.01 && radius >= Math.min(wave.maxRadius, waveMaxRadius);
     };
 
     function waveAtMaximum(wave, radius, anim) {
       var waveOpacity = waveOpacityFn(wave.tDown, wave.tUp, anim);
-      if (waveOpacity >= anim.initialOpacity && radius >= Math.min(wave.maxRadius, waveMaxRadius)) {
-        return true;
-      }
-      return false;
+
+      return waveOpacity >= anim.initialOpacity && radius >= Math.min(wave.maxRadius, waveMaxRadius);
     }
 
     //
     // DRAWING
     //
-    function drawRipple(ctx, x, y, radius, innerColor, outerColor) {
-      if (outerColor) {
-        ctx.fillStyle = outerColor;
-        ctx.fillRect(0,0,ctx.canvas.width, ctx.canvas.height);
+    function drawRipple(ctx, x, y, radius, innerAlpha, outerAlpha) {
+      // Only animate opacity and transform
+      if (outerAlpha !== undefined) {
+        ctx.bg.style.opacity = outerAlpha;
       }
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
-      ctx.fillStyle = innerColor;
-      ctx.fill();
+      ctx.wave.style.opacity = innerAlpha;
+
+      var s = radius / (ctx.containerSize / 2);
+      var dx = x - (ctx.containerWidth / 2);
+      var dy = y - (ctx.containerHeight / 2);
+
+      ctx.wc.style.webkitTransform = 'translate3d(' + dx + 'px,' + dy + 'px,0)';
+      ctx.wc.style.transform = 'translate3d(' + dx + 'px,' + dy + 'px,0)';
+
+      // 2d transform for safari because of border-radius and overflow:hidden clipping bug.
+      // https://bugs.webkit.org/show_bug.cgi?id=98538
+      ctx.wave.style.webkitTransform = 'scale(' + s + ',' + s + ')';
+      ctx.wave.style.transform = 'scale3d(' + s + ',' + s + ',1)';
     }
 
     //
@@ -2856,7 +3094,23 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
       var elementStyle = window.getComputedStyle(elem);
       var fgColor = elementStyle.color;
 
+      var inner = document.createElement('div');
+      inner.style.backgroundColor = fgColor;
+      inner.classList.add('wave');
+
+      var outer = document.createElement('div');
+      outer.classList.add('wave-container');
+      outer.appendChild(inner);
+
+      var container = elem.$.waves;
+      container.appendChild(outer);
+
+      elem.$.bg.style.backgroundColor = fgColor;
+
       var wave = {
+        bg: elem.$.bg,
+        wc: outer,
+        wave: inner,
         waveColor: fgColor,
         maxRadius: 0,
         isMouseDown: false,
@@ -2872,6 +3126,8 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
       if (scope.waves) {
         var pos = scope.waves.indexOf(wave);
         scope.waves.splice(pos, 1);
+        // FIXME cache nodes
+        wave.wc.remove();
       }
     };
 
@@ -2933,37 +3189,12 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
         up: 'upAction'
       },
 
-      attached: function() {
-        // create the canvas element manually becase ios
-        // does not render the canvas element if it is not created in the
-        // main document (component templates are created in a
-        // different document). See:
-        // https://bugs.webkit.org/show_bug.cgi?id=109073.
-        if (!this.$.canvas) {
-          var canvas = document.createElement('canvas');
-          canvas.id = 'canvas';
-          this.shadowRoot.appendChild(canvas);
-          this.$.canvas = canvas;
-        }
-      },
-
       ready: function() {
         this.waves = [];
       },
 
-      setupCanvas: function() {
-        this.$.canvas.setAttribute('width', this.$.canvas.clientWidth * this.pixelDensity + "px");
-        this.$.canvas.setAttribute('height', this.$.canvas.clientHeight * this.pixelDensity + "px");
-        var ctx = this.$.canvas.getContext('2d');
-        ctx.scale(this.pixelDensity, this.pixelDensity);
-        if (!this._loop) {
-          this._loop = this.animate.bind(this, ctx);
-        }
-      },
-
       downAction: function(e) {
-        this.setupCanvas();
-        var wave = createWave(this.$.canvas);
+        var wave = createWave(this);
 
         this.cancelled = false;
         wave.isMouseDown = true;
@@ -2972,9 +3203,9 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
         wave.mouseUpStart = 0.0;
         wave.mouseDownStart = now();
 
-        var width = this.$.canvas.width / 2; // Retina canvas
-        var height = this.$.canvas.height / 2;
         var rect = this.getBoundingClientRect();
+        var width = rect.width;
+        var height = rect.height;
         var touchX = e.x - rect.left;
         var touchY = e.y - rect.top;
 
@@ -2985,9 +3216,26 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
           wave.slideDistance = dist(wave.startPosition, wave.endPosition);
         }
         wave.containerSize = Math.max(width, height);
+        wave.containerWidth = width;
+        wave.containerHeight = height;
         wave.maxRadius = distanceFromPointToFurthestCorner(wave.startPosition, {w: width, h: height});
+
+        // The wave is circular so constrain its container to 1:1
+        wave.wc.style.top = (wave.containerHeight - wave.containerSize) / 2 + 'px';
+        wave.wc.style.left = (wave.containerWidth - wave.containerSize) / 2 + 'px';
+        wave.wc.style.width = wave.containerSize + 'px';
+        wave.wc.style.height = wave.containerSize + 'px';
+
         this.waves.push(wave);
-        requestAnimationFrame(this._loop);
+
+        if (!this._loop) {
+          this._loop = this.animate.bind(this, {
+            width: width,
+            height: height
+          });
+          requestAnimationFrame(this._loop);
+        }
+        // else there is already a rAF
       },
 
       upAction: function() {
@@ -3012,9 +3260,6 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
       animate: function(ctx) {
         var shouldRenderNextFrame = false;
 
-        // Clear the canvas
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
         var deleteTheseWaves = [];
         // The oldest wave's touch down duration
         var longestTouchDownDuration = 0;
@@ -3025,8 +3270,8 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
         var anim = {
           initialOpacity: this.initialOpacity,
           opacityDecayVelocity: this.opacityDecayVelocity,
-          height: ctx.canvas.height,
-          width: ctx.canvas.width
+          height: ctx.height,
+          width: ctx.width
         }
 
         for (var i = 0; i < this.waves.length; i++) {
@@ -3058,7 +3303,7 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
           // Ripple gravitational pull to the center of the canvas.
           if (wave.endPosition) {
 
-            // This translates from the origin to the center of the view  based on the max dimension of  
+            // This translates from the origin to the center of the view  based on the max dimension of
             var translateFraction = Math.min(1, radius / wave.containerSize * 2 / Math.sqrt(2) );
 
             x += translateFraction * (wave.endPosition.x - wave.startPosition.x);
@@ -3073,13 +3318,14 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
           }
 
           // Draw the ripple.
-          drawRipple(ctx, x, y, radius, waveColor, bgFillColor);
+          drawRipple(wave, x, y, radius, waveAlpha, bgFillAlpha);
 
           // Determine whether there is any more rendering to be done.
           var maximumWave = waveAtMaximum(wave, radius, anim);
           var waveDissipated = waveDidFinish(wave, radius, anim);
           var shouldKeepWave = !waveDissipated || maximumWave;
-          var shouldRenderWaveAgain = !waveDissipated && !maximumWave;
+          // keep rendering dissipating wave when at maximum radius on upAction
+          var shouldRenderWaveAgain = wave.mouseUpStart ? !waveDissipated : !maximumWave;
           shouldRenderNextFrame = shouldRenderNextFrame || shouldRenderWaveAgain;
           if (!shouldKeepWave || this.cancelled) {
             deleteTheseWaves.push(wave);
@@ -3095,11 +3341,11 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
           removeWaveFromScope(this, wave);
         }
 
-        if (!this.waves.length) {
-          // If there is nothing to draw, clear any drawn waves now because
-          // we're not going to get another requestAnimationFrame any more.
-          ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        if (!this.waves.length && this._loop) {
+          // clear the background color
+          this.$.bg.style.backgroundColor = null;
           this._loop = null;
+          this.fire('core-transitionend');
         }
       }
 
@@ -3111,611 +3357,79 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
 </polymer-element>
 
 
-
-<polymer-element name="paper-shadow">
+<polymer-element name="paper-icon-button" extends="paper-button-base" attributes="src icon" role="button">
 
   <template>
 
-    <style no-shim="">/*
- * @license
- * Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
- * The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
- * The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
- * Code distributed by Google as part of the polymer project is also
- * subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
- */
-
-.paper-shadow {
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  border-radius: inherit;
-  pointer-events: none;
-}
-
-.paper-shadow-animated.paper-shadow {
-  transition: box-shadow 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.paper-shadow-top-z-1 {
-  box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.16);
-}
-
-.paper-shadow-bottom-z-1 {
-  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
-}
-
-.paper-shadow-top-z-2 {
-  box-shadow: 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-}
-
-.paper-shadow-bottom-z-2 {
-  box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.2);
-}
-
-.paper-shadow-top-z-3 {
-  box-shadow: 0 17px 50px 0 rgba(0, 0, 0, 0.19);
-}
-
-.paper-shadow-bottom-z-3 {
-  box-shadow: 0 12px 15px 0 rgba(0, 0, 0, 0.24);
-}
-
-.paper-shadow-top-z-4 {
-  box-shadow: 0 25px 55px 0 rgba(0, 0, 0, 0.21);
-}
-
-.paper-shadow-bottom-z-4 {
-  box-shadow: 0 16px 28px 0 rgba(0, 0, 0, 0.22);
-}
-
-.paper-shadow-top-z-5 {
-  box-shadow: 0 40px 77px 0 rgba(0, 0, 0, 0.22);
-}
-
-.paper-shadow-bottom-z-5 {
-  box-shadow: 0 27px 24px 0 rgba(0, 0, 0, 0.2);
-}
-
-.paper-shadow-animate-z-1-z-2.paper-shadow-top {
-  -webkit-transition: none;
-  -webkit-animation: animate-shadow-top-z-1-z-2 0.7s infinite alternate;
-}
-
-.paper-shadow-animate-z-1-z-2 .paper-shadow-bottom {
-  -webkit-transition: none;
-  -webkit-animation: animate-shadow-bottom-z-1-z-2 0.7s infinite alternate;
-}
-
-@-webkit-keyframes animate-shadow-top-z-1-z-2 {
-  0% {
-    box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.16);
-  }
-  100% {
-    box-shadow: 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-  }
-}
-
-@-webkit-keyframes animate-shadow-bottom-z-1-z-2 {
-  0% {
-    box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
-  }
-  100% {
-    box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.2);
-  }
-}</style>
-
-  </template>
-
-  <script>
-    Polymer('paper-shadow', {
-
-      publish: {
-        /**
-         * If set, the shadow is applied to this node.
-         *
-         * @attribute target
-         * @type Element
-         * @default null
-         */
-        target: {value: null, reflect: true},
-
-        /**
-         * The z-depth of this shadow, from 0-5.
-         *
-         * @attribute z
-         * @type number
-         * @default 1
-         */
-        z: {value: 1, reflect: true},
-
-        /**
-         * If true, the shadow animates between z-depth changes.
-         *
-         * @attribute animated
-         * @type boolean
-         * @default false
-         */
-        animated: {value: false, reflect: true},
-
-        /**
-         * Workaround: getComputedStyle is wrong sometimes so `paper-shadow`
-         * may overwrite the `position` CSS property. Set this property to
-         * true to prevent this.
-         *
-         * @attribute hasPosition
-         * @type boolean
-         * @default false
-         */
-        hasPosition: false
-      },
-
-      // NOTE: include template so that styles are loaded, but remove
-      // so that we can decide dynamically what part to include
-      registerCallback: function(polymerElement) {
-        var template = polymerElement.querySelector('template');
-        this._style = template.content.querySelector('style');
-        this._style.removeAttribute('no-shim');
-      },
-
-      fetchTemplate: function() {
-        return null;
-      },
-
-      attached: function() {
-        // If no target is bound at attach, default the target to the parent
-        // element or shadow host.
-        if (!this.target) {
-          if (!this.parentElement && this.parentNode.host) {
-            this.target = this.parentNode.host;
-          } else if (this.parentElement && (window.ShadowDOMPolyfill ? this.parentElement !== wrap(document.body) : this.parentElement !== document.body)) {
-            this.target = this.parentElement;
-          }
-        }
-      },
-
-      targetChanged: function(old) {
-        if (old) {
-          this.removeShadow(old);
-        }
-        if (this.target) {
-          this.addShadow(this.target);
-        }
-      },
-
-      zChanged: function(old) {
-        if (this.target && this.target._paperShadow) {
-          var shadow = this.target._paperShadow;
-          ['top', 'bottom'].forEach(function(s) {
-            shadow[s].classList.remove('paper-shadow-' + s + '-z-' + old);
-            shadow[s].classList.add('paper-shadow-' + s + '-z-' + this.z);
-          }.bind(this));
-        }
-      },
-
-      animatedChanged: function() {
-        if (this.target && this.target._paperShadow) {
-          var shadow = this.target._paperShadow;
-          ['top', 'bottom'].forEach(function(s) {
-            if (this.animated) {
-              shadow[s].classList.add('paper-shadow-animated');
-            } else {
-              shadow[s].classList.remove('paper-shadow-animated');
-            }
-          }.bind(this));
-        }
-      },
-
-      addShadow: function(node) {
-        if (node._paperShadow) {
-          return;
-        }
-
-        if (!node._hasShadowStyle) {
-          if (!node.shadowRoot) {
-            node.createShadowRoot().innerHTML = '<content></content>';
-          }
-          this.installScopeStyle(this._style, 'shadow', node.shadowRoot);
-          node._hasShadowStyle = true;
-        }
-
-        var computed = getComputedStyle(node);
-        if (!this.hasPosition && computed.position === 'static') {
-          node.style.position = 'relative';
-        }
-        node.style.overflow = 'visible';
-
-        // Both the top and bottom shadows are children of the target, so
-        // it does not affect the classes and CSS properties of the target.
-        ['top', 'bottom'].forEach(function(s) {
-          var inner = (node._paperShadow && node._paperShadow[s]) || document.createElement('div');
-          inner.classList.add('paper-shadow');
-          inner.classList.add('paper-shadow-' + s + '-z-' + this.z);
-          if (this.animated) {
-            inner.classList.add('paper-shadow-animated');
-          }
-
-          if (node.shadowRoot) {
-            node.shadowRoot.insertBefore(inner, node.shadowRoot.firstChild);
-          } else {
-            node.insertBefore(inner, node.firstChild);
-          }
-
-          node._paperShadow = node._paperShadow || {};
-          node._paperShadow[s] = inner;
-        }.bind(this));
-
-      },
-
-      removeShadow: function(node) {
-        if (!node._paperShadow) {
-          return;
-        }
-
-        ['top', 'bottom'].forEach(function(s) {
-          node._paperShadow[s].remove();
-        });
-        node._paperShadow = null;
-
-        node.style.position = null;
+    <style>
+      :host {
+        display: inline-block;
+        position: relative;
+        padding: 8px;
+        outline: none;
+        -webkit-user-select: none;
+        user-select: none;
+        cursor: pointer;
+        z-index: 0;
       }
 
-    });
-  </script>
-</polymer-element>
+      :host([disabled]) {
+        color: #c9c9c9;
+        pointer-events: none;
+        cursor: auto;
+      }
 
+      #ripple {
+        pointer-events: none;
+        z-index: -1;
+      }
+    </style>
 
-<polymer-element name="paper-button" extends="paper-focusable" attributes="label raisedButton iconSrc icon" role="button">
-
-  <template>
-
-    <style>/*
- * @license
- * Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
- * The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
- * The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
- * Code distributed by Google as part of the polymer project is also
- * subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
- */
-
-:host {
-  display: inline-block;
-  position: relative;
-  border: 0;
-  background: transparent;
-  text-align: center;
-  font: inherit;
-  text-transform: uppercase;
-  outline: none;
-  border-radius: 3px;
-  -webkit-user-select: none;
-  user-select: none;
-  cursor: pointer;
-}
-
-:host(.hover:hover) {
-  background: #e4e4e4;
-}
-
-:host([raisedButton]) {
-  background: #dfdfdf;
-}
-
-:host([raisedButton].hover:hover) {
-  background: #d6d6d6;
-}
-
-:host([disabled]) {
-  background: #eaeaea !important;
-  color: #a8a8a8 !important;
-  cursor: auto;
-}
-
-#shadow-container {
-  border-radius: inherit;
-}
-
-#clip {
-  position: relative;
-  border-radius: inherit;
-  overflow: hidden;
-}
-
-/*
-#focusBg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  opacity: 0;
-  border-radius: inherit;
-  background: #c3c3c3;
-  -webkit-transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-:host([focused]) #focusBg {
-  -webkit-transition: none;
-  transition: none;
-  -webkit-animation: focus-fade 0.7s infinite alternate;
-  animation: focus-fade 0.7s infinite alternate;
-}
-
-@-webkit-keyframes focus-fade {
-  0% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
-@keyframes focus-fade {
-  0% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-*/
-
-#ripple {
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  color: #d1d1d1;
-  pointer-events: none;
-}
-
-:host([raisedButton]) #ripple {
-  color: #cecece;
-}
-
-#ripple::shadow canvas {
-  top: 0;
-  left: 0;
-}
-
-#content {
-  /* needed to position the ink behind the content */
-  position: relative;
-}
-
-#icon {
-  margin: 8px;
-}
-
-#content > span {
-  display: inline-block;
-  margin: 0.5em;
-}</style>
-
-    <template if="{{raisedButton}}">
-      <div fit="" id="shadow-container">
-        <paper-shadow id="shadow" z="{{z}}" animated=""></paper-shadow>
-      </div>
-    </template>
-
-    <div id="clip">
-      <!-- <div id="focusBg"></div> -->
-      <paper-ripple id="ripple"></paper-ripple>
-      <div id="content">
-        <template if="{{iconSrc || icon}}">
-          <core-icon id="icon" src="{{iconSrc}}" icon="{{icon}}"></core-icon>
-        </template>
-        <template if="{{label}}">
-          <span>{{label}}</span>
-        </template>
-      </div>
-    </div>
+    <!-- to position to ripple behind the icon -->
+    <core-icon relative="" id="icon" src="{{src}}" icon="{{icon}}"></core-icon>
 
   </template>
 
   <script>
-    Polymer('paper-button', {
+    Polymer({
 
       publish: {
 
         /**
-         * The label of the button.
+         * The URL of an image for the icon. If the src property is specified,
+         * the icon property should not be.
          *
-         * @attribute label
+         * @attribute src
          * @type string
          * @default ''
          */
-        label: '',
+        src: '',
 
         /**
-         * If true, the button will be styled as a "raised" button.
+         * Specifies the icon name or index in the set of icons available in
+         * the icon's icon set. If the icon property is specified,
+         * the src property should not be.
          *
-         * @attribute raisedButton
-         * @type boolean
-         * @default false
-         */
-        raisedButton: {value: false, reflect: true},
-
-        /**
-         * (optional) The URL of an image for an icon to use in the button.
-         * Should not use `icon` property if you are using this property.
-         *
-         * @attribute iconSrc
+         * @attribute icon
          * @type string
          * @default ''
          */
-         iconSrc: '',
+        icon: '',
 
-         /**
-          * (optional) Specifies the icon name or index in the set of icons
-          * available in the icon set. If using this property, load the icon
-          * set separately where the icon is used. Should not use `src`
-          * if you are using this property.
-          *
-          * @attribute icon
-          * @type string
-          * @default ''
-          */
-         icon: ''
+        recenteringTouch: true,
+        fill: false
 
-      },
-
-      z: 1,
-
-      attached: function() {
-        if (this.textContent && this.textContent.match(/\S+/)) {
-          console.warn('Using textContent to label the button is deprecated. Use the "label" property instead');
-          this.label = this.textContent;
-        }
-      },
-
-      activeChanged: function() {
-        this.super();
-
-        if (this.active) {
-          // FIXME: remove when paper-ripple can have a default 'down' state.
-          if (!this.lastEvent) {
-            var rect = this.getBoundingClientRect();
-            this.lastEvent = {
-              x: rect.left + rect.width / 2,
-              y: rect.top + rect.height / 2
-            }
-          }
-          this.$.ripple.downAction(this.lastEvent);
-        } else {
-          this.$.ripple.upAction();
-        }
-        this.adjustZ();
-      },
-
-      focusedChanged: function() {
-        this.super();
-        this.adjustZ();
-      },
-
-      disabledChanged: function() {
-        this.super();
-        this.adjustZ();
-      },
-
-      // waitForSpillCompleted: function(callback) {
-      //   this.async(callback, null, (this.$.ink.spillCompleted ? 0 : this.duration));
-      // },
-
-      // resetInk: function() {
-      //   this.active = false;
-      //   this.$.ink.reset();
-      // },
-
-      insideButton: function(x, y) {
-        var rect = this.getBoundingClientRect();
-        return (rect.left <= x) && (x <= rect.right) && (rect.top <= y) && (y <= rect.bottom);
-      },
-
-      adjustZ: function() {
-        if (this.focused) {
-          this.classList.add('paper-shadow-animate-z-1-z-2');
-        } else {
-          this.classList.remove('paper-shadow-animate-z-1-z-2');
-
-          if (this.active) {
-            this.z = 2;
-          } else if (this.disabled) {
-            this.z = 0;
-          } else {
-            this.z = 1;
-          }
-
-        }
-      },
-
-      downAction: function(e) {
-        this.super(e);
-        this.lastEvent = e;
-      },
-
-      labelChanged: function() {
-        this.setAttribute('aria-label', this.label);
-      }
-
-    });
-  </script>
-</polymer-element>
-
-
-<polymer-element name="paper-icon-button" extends="paper-button" attributes="fill">
-
-  <template>
-
-    <style>/*
-Copyright 2013 The Polymer Authors. All rights reserved.
-Use of this source code is governed by a BSD-style
-license that can be found in the LICENSE file.
-*/
-
-:host([disabled]) {
-  background: none !important;
-}
-
-:host([disabled]) /deep/ #icon {
-  fill: #c9c9c9;
-}
-
-:host(:not([fill])) /deep/ #focusBg {
-  border-radius: 50%;
-}</style>
-
-    <shadow></shadow>
-
-  </template>
-
-  <script>
-  
-    Polymer('paper-icon-button', {
-
-      publish: {
-
-        /**
-         * If true, the ripple expands to a square to fill the containing box.
-         *
-         * @attribute fill
-         * @type boolean
-         * @default false
-         */
-        fill: {value: false, reflect: true}
-
-      },
-
-      ready: function() {
-        this.$.ripple.classList.add('recenteringTouch');
-        this.fillChanged();
-      },
-
-      fillChanged: function() {
-        this.$.ripple.classList.toggle('circle', !this.fill);
       },
 
       iconChanged: function(oldIcon) {
-        if (!this.label) {
-          this.setAttribute('aria-label', this.icon);
-        }
+        this.setAttribute('aria-label', this.icon);
       }
 
     });
-    
+
   </script>
-  
+
 </polymer-element>
-
-
-
-
 
 
 
@@ -3780,16 +3494,12 @@ textarea {
   resize: none;
 }
 
-textarea[fit] {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+textarea[rows=fit] {
+  height: 100%;
 }</style>
 
     <template if="{{multiline}}">
-      <textarea id="input" value="{{inputValue}}" rows="{{rows}}" fit?="{{rows === 'fit'}}" disabled?="{{disabled}}" placeholder="{{placeholder}}" autofocus?="{{autofocus}}" required?="{{required}}" readonly?="{{readonly}}" maxlength="{{maxlength}}" aria-label="{{label || placeholder}}" aria-invalid="{{invalid}}" on-change="{{inputChangeAction}}" on-focus="{{inputFocusAction}}" on-blur="{{inputBlurAction}}"></textarea>
+      <textarea id="input" value="{{inputValue}}" rows="{{rows}}" disabled?="{{disabled}}" placeholder="{{placeholder}}" autofocus?="{{autofocus}}" required?="{{required}}" readonly?="{{readonly}}" maxlength="{{maxlength}}" aria-label="{{label || placeholder}}" aria-invalid="{{invalid}}" on-change="{{inputChangeAction}}" on-focus="{{inputFocusAction}}" on-blur="{{inputBlurAction}}"></textarea>
     </template>
 
     <template if="{{!multiline}}">
@@ -4188,7 +3898,7 @@ textarea[fit] {
        * Forwards to the internal input / textarea element and updates state.
        *
        * @method setCustomValidity
-       * @param {number} message
+       * @param {String} message
        */
       setCustomValidity: function(message) {
         this.$.input.setCustomValidity(message);
@@ -4532,6 +4242,22 @@ Polymer('core-style', {
 
   <template>
 
+    <!--
+    Input tests:
+
+    - set value to integer 0
+    - various html5 input types
+    - sizing:
+      - single-line: size with CSS
+      - single-line: can fit to container
+      - multi-line: size with CSS
+      - multi-line: size with rows
+      - multi-line: can fit to container
+      - multi-line: grows with typing
+      - multi-line: max rows
+      - multi-line: max rows, scrolls after
+    -->
+
     <style>/*
  * @license
  * Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
@@ -4554,25 +4280,14 @@ Polymer('core-style', {
 :host /deep/ textarea {
   font: inherit;
   color: #000;
-  /* fit to the container for auto-resizing */
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
   padding: 0;
-  /* Important to use margin here so the margin remains visible
-   * when textarea scrolls internally. */
-  margin: 0.5em 0 0.25em;
+  margin: 0;
   background-color: transparent;
   border: none;
   outline: none;
+  /* see comments in template */
   width: 100%;
-}
-
-:host /deep/ input::hover,
-:host /deep/ textarea::hover {
-  cursor: text;
+  height: 100%;
 }
 
 input:invalid,
@@ -4582,7 +4297,6 @@ textarea:invalid {
 
 textarea {
   resize: none;
-  overflow: hidden;
 }
 
 [invisible] {
@@ -4649,6 +4363,15 @@ textarea {
   transform: translate3d(3em,0,0) scale3d(50,1,1);
 }
 
+.input-container {
+  position: absolute;
+  /* simulate padding so the input/textarea can use 100% width/height */
+  top: 0.5em;
+  right: 0;
+  bottom: 0.25em;
+  left: 0;
+}
+
 .underline {
   height: 0px;
   overflow: visible;
@@ -4692,8 +4415,10 @@ textarea {
       <span id="floatedLabelText" class="label-text">{{label}}</span>
     </div>
 
-    <div flex="" auto="" relative="" on-down="{{downAction}}" on-up="{{upAction}}">
+    <!-- <div class="input-body" flex auto relative on-down="{{downAction}}" on-up="{{upAction}}"> -->
+    <div class="input-body" flex="" auto="" relative="">
 
+      <!-- the mirror sizes the input/textarea so it grows with typing -->
       <div id="mirror" class="mirror-text" invisible="" aria-hidden="true"></div>
 
       <div class="label" fit="" aria-hidden="true">
@@ -4703,7 +4428,10 @@ textarea {
 
       <div class="cursor" invisible?="{{!cursorAnimated}}" animated?="{{cursorAnimated}}"></div>
 
-      <shadow></shadow>
+      <!-- size the input/textarea with a div, because the textarea has intrinsic size in ff -->
+      <div class="input-container" on-down="{{downAction}}" on-up="{{upAction}}">
+        <shadow></shadow>
+      </div>
 
     </div>
 
@@ -4950,6 +4678,386 @@ textarea {
 
 
 
+<polymer-element name="paper-shadow">
+
+  <template>
+
+    <style no-shim="">/*
+ * @license
+ * Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
+ * This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+ * The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+ * The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+ * Code distributed by Google as part of the polymer project is also
+ * subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+ */
+
+.paper-shadow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.paper-shadow-animated.paper-shadow {
+  transition: box-shadow 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.paper-shadow-top-z-1 {
+  box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.16);
+}
+
+.paper-shadow-bottom-z-1 {
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+}
+
+.paper-shadow-top-z-2 {
+  box-shadow: 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+.paper-shadow-bottom-z-2 {
+  box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.2);
+}
+
+.paper-shadow-top-z-3 {
+  box-shadow: 0 17px 50px 0 rgba(0, 0, 0, 0.19);
+}
+
+.paper-shadow-bottom-z-3 {
+  box-shadow: 0 12px 15px 0 rgba(0, 0, 0, 0.24);
+}
+
+.paper-shadow-top-z-4 {
+  box-shadow: 0 25px 55px 0 rgba(0, 0, 0, 0.21);
+}
+
+.paper-shadow-bottom-z-4 {
+  box-shadow: 0 16px 28px 0 rgba(0, 0, 0, 0.22);
+}
+
+.paper-shadow-top-z-5 {
+  box-shadow: 0 40px 77px 0 rgba(0, 0, 0, 0.22);
+}
+
+.paper-shadow-bottom-z-5 {
+  box-shadow: 0 27px 24px 0 rgba(0, 0, 0, 0.2);
+}
+
+.paper-shadow-animate-z-1-z-2.paper-shadow-top {
+  -webkit-transition: none;
+  -webkit-animation: animate-shadow-top-z-1-z-2 0.7s infinite alternate;
+}
+
+.paper-shadow-animate-z-1-z-2 .paper-shadow-bottom {
+  -webkit-transition: none;
+  -webkit-animation: animate-shadow-bottom-z-1-z-2 0.7s infinite alternate;
+}
+
+@-webkit-keyframes animate-shadow-top-z-1-z-2 {
+  0% {
+    box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.16);
+  }
+  100% {
+    box-shadow: 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  }
+}
+
+@-webkit-keyframes animate-shadow-bottom-z-1-z-2 {
+  0% {
+    box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+  }
+  100% {
+    box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.2);
+  }
+}</style>
+
+  </template>
+
+  <script>
+    Polymer('paper-shadow', {
+
+      publish: {
+        /**
+         * If set, the shadow is applied to this node.
+         *
+         * @attribute target
+         * @type Element
+         * @default null
+         */
+        target: {value: null, reflect: true},
+
+        /**
+         * The z-depth of this shadow, from 0-5.
+         *
+         * @attribute z
+         * @type number
+         * @default 1
+         */
+        z: {value: 1, reflect: true},
+
+        /**
+         * If true, the shadow animates between z-depth changes.
+         *
+         * @attribute animated
+         * @type boolean
+         * @default false
+         */
+        animated: {value: false, reflect: true},
+
+        /**
+         * Workaround: getComputedStyle is wrong sometimes so `paper-shadow`
+         * may overwrite the `position` CSS property. Set this property to
+         * true to prevent this.
+         *
+         * @attribute hasPosition
+         * @type boolean
+         * @default false
+         */
+        hasPosition: false
+      },
+
+      // NOTE: include template so that styles are loaded, but remove
+      // so that we can decide dynamically what part to include
+      registerCallback: function(polymerElement) {
+        var template = polymerElement.querySelector('template');
+        this._style = template.content.querySelector('style');
+        this._style.removeAttribute('no-shim');
+      },
+
+      fetchTemplate: function() {
+        return null;
+      },
+
+      attached: function() {
+        // If no target is bound at attach, default the target to the parent
+        // element or shadow host.
+        if (!this.target) {
+          if (!this.parentElement && this.parentNode.host) {
+            this.target = this.parentNode.host;
+          } else if (this.parentElement && (window.ShadowDOMPolyfill ? this.parentElement !== wrap(document.body) : this.parentElement !== document.body)) {
+            this.target = this.parentElement;
+          }
+        }
+      },
+
+      targetChanged: function(old) {
+        if (old) {
+          this.removeShadow(old);
+        }
+        if (this.target) {
+          this.addShadow(this.target);
+        }
+      },
+
+      zChanged: function(old) {
+        if (this.target && this.target._paperShadow) {
+          var shadow = this.target._paperShadow;
+          ['top', 'bottom'].forEach(function(s) {
+            shadow[s].classList.remove('paper-shadow-' + s + '-z-' + old);
+            shadow[s].classList.add('paper-shadow-' + s + '-z-' + this.z);
+          }.bind(this));
+        }
+      },
+
+      animatedChanged: function() {
+        if (this.target && this.target._paperShadow) {
+          var shadow = this.target._paperShadow;
+          ['top', 'bottom'].forEach(function(s) {
+            if (this.animated) {
+              shadow[s].classList.add('paper-shadow-animated');
+            } else {
+              shadow[s].classList.remove('paper-shadow-animated');
+            }
+          }.bind(this));
+        }
+      },
+
+      addShadow: function(node) {
+        if (node._paperShadow) {
+          return;
+        }
+
+        if (!node._hasShadowStyle) {
+          if (!node.shadowRoot) {
+            node.createShadowRoot().innerHTML = '<content></content>';
+          }
+          this.installScopeStyle(this._style, 'shadow', node.shadowRoot);
+          node._hasShadowStyle = true;
+        }
+
+        var computed = getComputedStyle(node);
+        if (!this.hasPosition && computed.position === 'static') {
+          node.style.position = 'relative';
+        }
+        node.style.overflow = 'visible';
+
+        // Both the top and bottom shadows are children of the target, so
+        // it does not affect the classes and CSS properties of the target.
+        ['top', 'bottom'].forEach(function(s) {
+          var inner = (node._paperShadow && node._paperShadow[s]) || document.createElement('div');
+          inner.classList.add('paper-shadow');
+          inner.classList.add('paper-shadow-' + s + '-z-' + this.z);
+          if (this.animated) {
+            inner.classList.add('paper-shadow-animated');
+          }
+
+          if (node.shadowRoot) {
+            node.shadowRoot.insertBefore(inner, node.shadowRoot.firstChild);
+          } else {
+            node.insertBefore(inner, node.firstChild);
+          }
+
+          node._paperShadow = node._paperShadow || {};
+          node._paperShadow[s] = inner;
+        }.bind(this));
+
+      },
+
+      removeShadow: function(node) {
+        if (!node._paperShadow) {
+          return;
+        }
+
+        ['top', 'bottom'].forEach(function(s) {
+          node._paperShadow[s].remove();
+        });
+        node._paperShadow = null;
+
+        node.style.position = null;
+      }
+
+    });
+  </script>
+</polymer-element>
+
+
+
+
+<polymer-element name="paper-button" extends="paper-button-base" attributes="raised recenteringTouch fill" role="button">
+
+  <template>
+
+    <style>
+
+      :host {
+        display: inline-block;
+        position: relative;
+        box-sizing: border-box;
+        min-width: 5.14em;
+        padding: 0.7em 0.57em;
+        margin: 0 0.29em;
+        background: transparent;
+        text-align: center;
+        font: inherit;
+        text-transform: uppercase;
+        outline: none;
+        border-radius: 3px;
+        -webkit-user-select: none;
+        user-select: none;
+        cursor: pointer;
+        z-index: 0;
+      }
+
+      :host([disabled]) {
+        background: #eaeaea !important;
+        color: #a8a8a8 !important;
+        cursor: auto;
+        pointer-events: none;
+      }
+
+      ::content * {
+        text-transform: inherit;
+      }
+
+      #ripple {
+        pointer-events: none;
+        z-index: -1;
+      }
+
+    </style>
+
+    <template if="{{raisedButton || raised}}">
+      <paper-shadow id="shadow" z="{{z}}" animated=""></paper-shadow>
+    </template>
+
+    <!-- this div is needed to position the ripple behind text content -->
+    <div relative="">
+      <content></content>
+      {{label}}
+    </div>
+
+  </template>
+
+  <script>
+    Polymer({
+
+      publish: {
+
+        label: '',
+
+        /**
+         * If true, the button will be styled with a shadow.
+         *
+         * @attribute raised
+         * @type boolean
+         * @default false
+         */
+        raised: false,
+        raisedButton: false,
+
+        /**
+         * By default the ripple emanates from where the user touched the button.
+         * Set this to true to always center the ripple.
+         *
+         * @attribute recenteringTouch
+         * @type boolean
+         * @default false
+         */
+        recenteringTouch: false,
+
+        /**
+         * By default the ripple expands to fill the button. Set this to true to
+         * constrain the ripple to a circle within the button.
+         *
+         * @attribute fill
+         * @type boolean
+         * @default true
+         */
+        fill: true
+
+      },
+
+      labelChanged: function() {
+        if (this.label) {
+          console.warn('The "label" property is deprecated.');
+        }
+      },
+
+      raisedButtonChanged: function() {
+        if (this.raisedButton) {
+          console.warn('The "raisedButton" property is deprecated.');
+        }
+      }
+
+    });
+  </script>
+</polymer-element>
+
+
+
+
+
+
+
+
+
+
+
+
+
 <polymer-element name="core-transition" extends="core-meta">
   
   <script>
@@ -5171,10 +5279,15 @@ presses the escape key. This behavior can be turned off via the
     </core-overlay>
 
 `core-overlay` will automatically size and position itself according to the 
-following rules. If the target's style.top and style.left are unset, the 
-target will be centered. The size of the target is constrained to be no larger
-than the window dimensions. The `margin` property specifies the extra amount
-of space that should be reserved around the overlay. This can be used to ensure
+following rules. The overlay's size is constrained such that it does not
+overflow the screen. This is done by setting maxHeight/maxWidth on the 
+`sizingTarget`. If the `sizingTarget` already has a setting for one of these
+properties, it will not be overridden. The overlay should
+be positioned via css or imperatively using the `core-overlay-position` event.
+If the overlay is not positioned vertically via setting `top` or `bottom`, it
+will be centered vertically. The same is true horizontally via a setting to 
+`left` or `right`. In addition, css `margin` can be used to provide some space
+around the overlay. This can be used to ensure
 that, for example, a drop shadow is always visible around the overlay.
 
 @group Core Elements
@@ -5197,6 +5310,20 @@ Fired when the `core-overlay` has completely opened.
 Fired when the `core-overlay` has completely closed.
 
 @event core-overlay-close-completed
+-->
+<!--
+Fired when the `core-overlay` needs to position itself. Optionally, implement
+in order to position an overlay via code. If the overlay was not otherwise
+positioned, it's important to indicate how the overlay has been positioned by
+setting the `dimensions.position` object. For example, if the overlay has been
+positioned via setting `right` and `top`, set dimensions.position to an
+object like this: `{v: 'top', h: 'right'}`.
+
+@event core-overlay-position
+@param {Object} detail
+@param {Object} detail.target the overlay target
+@param {Object} detail.sizingTarget the overlay sizing target
+@param {Object} detail.opened the opened state
 -->
 <style>
   .core-overlay-backdrop {
@@ -5289,6 +5416,16 @@ Fired when the `core-overlay` has completely closed.
       autoCloseDisabled: false,
 
       /**
+       * By default an overlay will focus its target or an element inside
+       * it with the `autoFocus` attribute. Disable this
+       * behavior by setting the `autoFocusDisabled` property to true.
+       * @attribute autoFocusDisabled
+       * @type boolean
+       * @default false
+       */
+      autoFocusDisabled: false,
+
+      /**
        * This property specifies an attribute on elements that should
        * close the overlay on tap. Should not set `closeSelector` if this
        * is set.
@@ -5309,18 +5446,6 @@ Fired when the `core-overlay` has completely closed.
        * @default ""
        */
       closeSelector: '',
-
-      /**
-       * A `core-overlay` target's size is constrained to the window size.
-       * The `margin` property specifies a pixel amount around the overlay 
-       * that will be reserved. It's useful for ensuring that, for example, 
-       * a shadow displayed outside the target will always be visible.
-       *
-       * @attribute margin
-       * @type number
-       * @default 0
-       */
-      margin: 0,
 
       /**
        * The transition property specifies a string which identifies a 
@@ -5395,6 +5520,7 @@ Fired when the `core-overlay` has completely closed.
         }
         this.addElementListenerList(this.target, this.targetListeners);
         this.target.style.display = 'none';
+        this.target.__overlaySetup = false;
       }
       if (old) {
         this.removeElementListenerList(old, this.targetListeners);
@@ -5409,11 +5535,24 @@ Fired when the `core-overlay` has completely closed.
       }
     },
 
+    transitionChanged: function(old) {
+      if (!this.target) {
+        return;
+      }
+      if (old) {
+        this.getTransition(old).teardown(this.target);
+      }
+      this.target.__overlaySetup = false;
+    },
+
     // NOTE: wait to call this until we're as sure as possible that target
     // is styled.
     ensureTargetSetup: function() {
       if (!this.target || this.target.__overlaySetup) {
         return;
+      }
+      if (!this.sizingTarget) {
+        this.sizingTarget = this.target;
       }
       this.target.__overlaySetup = true;
       this.target.style.display = '';
@@ -5421,29 +5560,25 @@ Fired when the `core-overlay` has completely closed.
       if (transition) {
         transition.setup(this.target);
       }
+      var style = this.target.style;
       var computed = getComputedStyle(this.target);
-      this.targetStyle = {
-        position: computed.position === 'static' ? 'fixed' :
-            computed.position
+      if (computed.position === 'static') {
+        style.position = 'fixed';
       }
-      if (!transition) {
-        this.target.style.position = this.targetStyle.position;
-        this.target.style.outline = 'none';
-      }
-      this.target.style.display = 'none';
+      style.outline = 'none';
+      style.display = 'none';
     },
 
     openedChanged: function() {
       this.transitioning = true;
       this.ensureTargetSetup();
       this.prepareRenderOpened();
-      // continue styling after delay so display state can change
-      // without aborting transitions
-      // note: we wait a full frame so that transition changes executed
-      // during measuring do not cause transition
+      // async here to allow overlay layer to become visible.
       this.async(function() {
         this.target.style.display = '';
-        this.async('renderOpened');
+        // force layout to ensure transitions will go
+        this.target.offsetWidth;
+        this.renderOpened();
       });
       this.fire('core-overlay-open', this.opened);
     },
@@ -5465,20 +5600,14 @@ Fired when the `core-overlay` has completely closed.
           'resizeHandler');
 
       if (this.opened) {
-        // TODO(sorvell): force SD Polyfill to render
-        forcePolyfillRender(this.target);
-        if (!this._shouldPosition) {
-          this.target.style.position = 'absolute';
-          var computed = getComputedStyle(this.target);
-          var t = (computed.top === 'auto' && computed.bottom === 'auto');
-          var l = (computed.left === 'auto' && computed.right === 'auto');
-          this.target.style.position = this.targetStyle.position;
-          this._shouldPosition = {top: t, left: l};
-        }
-        // if we are showing, then take care when measuring
-        this.prepareMeasure(this.target);
+        // force layout so SD Polyfill renders
+        this.target.offsetHeight;
+        this.discoverDimensions();
+        // if we are showing, then take care when positioning
+        this.preparePositioning();
+        this.positionTarget();
         this.updateTargetDimensions();
-        this.finishMeasure(this.target);
+        this.finishPositioning();
         if (this.layered) {
           this.layer.addElement(this.target);
           this.layer.opened = this.opened;
@@ -5547,20 +5676,49 @@ Fired when the `core-overlay` has completely closed.
       }
     },
 
-    prepareMeasure: function(target) {
-      target.style.transition = target.style.webkitTransition = 'none';
-      target.style.transform = target.style.webkitTransform = 'none';
-      target.style.display = '';
+    preparePositioning: function() {
+      this.target.style.transition = this.target.style.webkitTransition = 'none';
+      this.target.style.transform = this.target.style.webkitTransform = 'none';
+      this.target.style.display = '';
     },
 
-    finishMeasure: function(target) {
-      target.style.display = 'none';
-      target.style.transform = target.style.webkitTransform = '';
-      target.style.transition = target.style.webkitTransition = '';
+    discoverDimensions: function() {
+      if (this.dimensions) {
+        return;
+      }
+      var target = getComputedStyle(this.target);
+      var sizer = getComputedStyle(this.sizingTarget);
+      this.dimensions = {
+        position: {
+          v: target.top !== 'auto' ? 'top' : (target.bottom !== 'auto' ?
+            'bottom' : null),
+          h: target.left !== 'auto' ? 'left' : (target.right !== 'auto' ?
+            'right' : null),
+          css: target.position
+        },
+        size: {
+          v: sizer.maxHeight !== 'none',
+          h: sizer.maxWidth !== 'none'
+        },
+        margin: {
+          top: parseInt(target.marginTop) || 0,
+          right: parseInt(target.marginRight) || 0,
+          bottom: parseInt(target.marginBottom) || 0,
+          left: parseInt(target.marginLeft) || 0
+        }
+      };
     },
 
-    getTransition: function() {
-      return this.meta.byId(this.transition);
+    finishPositioning: function(target) {
+      this.target.style.display = 'none';
+      this.target.style.transform = this.target.style.webkitTransform = '';
+      // force layout to avoid application of transform
+      this.target.offsetWidth;
+      this.target.style.transition = this.target.style.webkitTransition = '';
+    },
+
+    getTransition: function(name) {
+      return this.meta.byId(name || this.transition);
     },
 
     getFocusNode: function() {
@@ -5570,7 +5728,9 @@ Fired when the `core-overlay` has completely closed.
     applyFocus: function() {
       var focusNode = this.getFocusNode();
       if (this.opened) {
-        focusNode.focus();
+        if (!this.autoFocusDisabled) {
+          focusNode.focus();
+        }
       } else {
         focusNode.blur();
         if (currentOverlay() == this) {
@@ -5581,49 +5741,74 @@ Fired when the `core-overlay` has completely closed.
       }
     },
 
-    updateTargetDimensions: function() {
-      this.positionTarget();
-      this.sizeTarget();
-      //
-      if (this.layered) {
-        var rect = this.target.getBoundingClientRect();
-        this.target.style.top = rect.top + 'px';
-        this.target.style.left = rect.left + 'px';
-        this.target.style.right = this.target.style.bottom = 'auto';
+    positionTarget: function() {
+      // fire positioning event
+      this.fire('core-overlay-position', {target: this.target,
+          sizingTarget: this.sizingTarget, opened: this.opened});
+      if (!this.dimensions.position.v) {
+        this.target.style.top = '0px';
       }
+      if (!this.dimensions.position.h) {
+        this.target.style.left = '0px';
+      }
+    },
+
+    updateTargetDimensions: function() {
+      this.sizeTarget();
+      this.repositionTarget();
     },
 
     sizeTarget: function() {
-      var sizer = this.sizingTarget || this.target;
-      var rect = sizer.getBoundingClientRect();
-      var mt = rect.top === this.margin ? this.margin : this.margin * 2;
-      var ml = rect.left === this.margin ? this.margin : this.margin * 2;
-      var h = window.innerHeight - rect.top - mt;
-      var w = window.innerWidth - rect.left - ml;
-      sizer.style.maxHeight = h + 'px';
-      sizer.style.maxWidth = w + 'px';
-      sizer.style.boxSizing = 'border-box';
+      this.sizingTarget.style.boxSizing = 'border-box';
+      var dims = this.dimensions;
+      var rect = this.target.getBoundingClientRect();
+      if (!dims.size.v) {
+        this.sizeDimension(rect, dims.position.v, 'top', 'bottom', 'Height');
+      }
+      if (!dims.size.h) {
+        this.sizeDimension(rect, dims.position.h, 'left', 'right', 'Width');
+      }
     },
 
-    positionTarget: function() {
-      // vertically and horizontally center if not positioned
-      if (this._shouldPosition.top) {
-        var t = Math.max((window.innerHeight - 
-            this.target.offsetHeight - this.margin*2) / 2, this.margin);
+    sizeDimension: function(rect, positionedBy, start, end, extent) {
+      var dims = this.dimensions;
+      var flip = (positionedBy === end);
+      var m = flip ? start : end;
+      var ws = window['inner' + extent];
+      var o = dims.margin[m] + (flip ? ws - rect[end] : 
+          rect[start]);
+      var offset = 'offset' + extent;
+      var o2 = this.target[offset] - this.sizingTarget[offset];
+      this.sizingTarget.style['max' + extent] = (ws - o - o2) + 'px';
+    },
+
+    // vertically and horizontally center if not positioned
+    repositionTarget: function() {
+      // only center if position fixed.      
+      if (this.dimensions.position.css !== 'fixed') {
+        return; 
+      }
+      if (!this.dimensions.position.v) {
+        var t = (window.innerHeight - this.target.offsetHeight) / 2;
+        t -= this.dimensions.margin.top;
         this.target.style.top = t + 'px';
       }
-      if (this._shouldPosition.left) {
-        var l = Math.max((window.innerWidth - 
-            this.target.offsetWidth - this.margin*2) / 2, this.margin);
+
+      if (!this.dimensions.position.h) {
+        var l = (window.innerWidth - this.target.offsetWidth) / 2;
+        l -= this.dimensions.margin.left;
         this.target.style.left = l + 'px';
       }
     },
 
     resetTargetDimensions: function() {
-      this.target.style.top = this.target.style.left = '';
-      this.target.style.right = this.target.style.bottom = '';
-      this.target.style.width = this.target.style.height = '';
-      this._shouldPosition = null;
+      if (!this.dimensions.size.v) {
+        this.sizingTarget.style.maxHeight = '';  
+      }
+      if (!this.dimensions.size.h) {
+        this.sizingTarget.style.maxWidth = '';  
+      }
+      this.dimensions = null;
     },
 
     tapHandler: function(e) {
@@ -5716,17 +5901,11 @@ Fired when the `core-overlay` has completely closed.
       if (!this[bound]) {
         this[bound] = function(e) {
           method.call(self, e);
-        }
+        };
       }
       return this[bound];
     },
   });
-
-  function forcePolyfillRender(target) {
-    if (window.ShadowDOMPolyfill) {
-      target.offsetHeight;
-    }
-  }
 
   // TODO(sorvell): This should be an element with private state so it can
   // be independent of overlay.
@@ -5879,7 +6058,7 @@ h1 {
   padding: 4px 16px 20px;
 }
 
-polymer-next-selector { content: ':host > *'; }
+polyfill-next-selector { content: ':host > *'; }
 ::content > * {
   font: inherit;
 }
