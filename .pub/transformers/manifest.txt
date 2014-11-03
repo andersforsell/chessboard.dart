@@ -1,2 +1,2 @@
-1.8.0-dev.0.0
+1.8.0-dev.2.0
 observe,polymer/src/build/delete_file,polymer/src/build/mirrors_remover,polymer/src/build/remove_sourcemap_comment,smoke/src/default_transformer
