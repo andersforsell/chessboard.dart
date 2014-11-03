@@ -1,3 +1,8 @@
+
+### 0.0.9
+
+Fixed warnings and a paper_dialog error.
+
 ### 0.0.8
 
 Upgraded pub dependencies.
