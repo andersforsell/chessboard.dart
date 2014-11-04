@@ -87,7 +87,9 @@ class ChessBoard extends PolymerElement {
       _currentPosition = new Chess.fromFEN(position);
     } else {
       _currentPosition = new Chess();
-      _currentPosition.load_pgn(position, {'newline_char' : '\n'});
+      _currentPosition.load_pgn(position, {
+        'newline_char': '\n'
+      });
     }
     _updateGameState();
   }
@@ -112,7 +114,7 @@ class ChessBoard extends PolymerElement {
   }
 
   void refresh() {
-    _drawChessPosition(refresh: true);
+    _drawChessPosition();
   }
 
   void undo() {
@@ -132,29 +134,23 @@ class ChessBoard extends PolymerElement {
     }
   }
 
-  void _drawChessPosition({bool refresh: false}) {
+  void _drawChessPosition() {
     for (var row = 1; row <= 8; row++) {
       for (var col in COLUMNS) {
         var square = "$col$row";
         var piece = _currentPosition.get(square);
-        var pieceStr = piece != null ?
-            '${piece.color}${piece.type.toUpperCase()}' : null;
+        var pieceStr =
+            piece != null ? '${piece.color}${piece.type.toUpperCase()}' : null;
         var squareElement = _boardElement.querySelector('#$square');
         var pieceElement = squareElement.querySelector('.piece');
         if (pieceElement != null) {
-          if (refresh) {
-            pieceElement.style
-                ..height = "${squareSize}px"
-                ..width = "${squareSize}px";
-          }
           if (pieceElement.id == pieceStr) {
             continue;
           }
           pieceElement.remove();
         }
         if (pieceStr != null) {
-          pieceElement = new ImageElement(src: _buildPieceImgSrc(pieceStr),
-              width: squareSize, height: squareSize)
+          pieceElement = new ImageElement(src: _buildPieceImgSrc(pieceStr))
               ..className = 'piece'
               ..id = pieceStr
               ..onDragStart.listen(_onDragStart);
