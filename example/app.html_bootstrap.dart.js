@@ -3327,8 +3327,8 @@ x.a7(y,"iconSrc",J.JA(a.kR,new H.VR("{piece}",H.Vq("{piece}",!1,!0,!1),null,null
 PZ:function(a){var z=this.U0(a,C.CD.yu(C.CD.UD(a.clientWidth)))
 a.Q3=this.ct(a,C.mq,a.Q3,z)
 J.vP(J.qk(a.yH),H.d(J.vX(a.Q3,8))+"px")
-this.Cj(a,!0)},
-zr:function(a){this.Cj(a,!0)},
+this.V2(a)},
+zr:function(a){this.V2(a)},
 E3:function(a){a.xw.E3(0)
 this.yt(a)},
 oW:function(a){var z,y,x
@@ -3340,7 +3340,7 @@ x.gjb(y).Qr(this.gEM(a))
 x.gKH(y).Qr(this.gMu(a))
 x.glX(y).Qr(this.gd0(a))
 x.gVl(y).Qr(this.glh(a))}},
-Cj:function(a,b){var z,y,x,w,v,u,t,s,r,q,p,o
+V2:function(a){var z,y,x,w,v,u,t,s,r,q,p,o
 for(z=1;z<=8;++z){y=$.z6()
 x=new H.a7(y,y.length,0,null)
 x.$builtinTypeInfo=[H.Kp(y,0)]
@@ -3353,17 +3353,11 @@ if(u!=null){y=J.RE(u)
 t=H.d(y.gih(u))+J.lR(y.gt5(u))}else t=null
 s=J.c1(a.yH,"#"+w)
 r=s.querySelector(".piece")
-if(r!=null){if(b){y=r.style
-J.RE(y).sfg(y,H.d(a.Q3)+"px")
-C.rd.sR(y,H.d(a.Q3)+"px")}if(J.xC(J.F8(r),t))continue
+if(r!=null){if(J.xC(J.F8(r),t))continue
 y=r.parentNode
 if(y!=null)y.removeChild(r)}if(t!=null){y=J.JA(a.kR,new H.VR("{piece}",H.Vq("{piece}",!1,!0,!1),null,null),t)
-v=a.Q3
 q=document.createElement("img",null)
 if(y!=null)J.Yj(q,y)
-y=v!=null
-if(y)J.vP(q,v)
-if(y)J.OE(q,v)
 q.className="piece"
 y=J.RE(q)
 y.sjO(q,t)
@@ -3375,7 +3369,6 @@ o.$builtinTypeInfo=[H.Kp(y,0)]
 y=o.H2
 if(y!=null&&o.UU<=0)J.hq(o.uv,v,y,p)
 J.OG(s).h(0,q)}}}},
-V2:function(a){return this.Cj(a,!1)},
 U0:function(a,b){var z
 if(b<=0)return 0
 z=b-1
@@ -3543,7 +3536,6 @@ vu:{
 "^":"Zq;ru",
 gLA:function(a){return J.UQ(this.giw(a),"src")},
 sLA:function(a,b){J.qQ(this.giw(a),"src",b)},
-sR:function(a,b){J.qQ(this.giw(a),"width",b)},
 static:{EvT:function(a){a.toString
 C.iz.LX(a)
 return a}}}}],["","",,Q,{
@@ -7520,7 +7512,7 @@ $isEH:true}}],["","",,W,{
 "^":"",
 qE:{
 "^":"cv;",
-"%":"HTMLAppletElement|HTMLBRElement|HTMLContentElement|HTMLDListElement|HTMLDataListElement|HTMLDirectoryElement|HTMLDivElement|HTMLFontElement|HTMLFrameElement|HTMLHeadElement|HTMLHeadingElement|HTMLHtmlElement|HTMLLabelElement|HTMLLegendElement|HTMLMarqueeElement|HTMLModElement|HTMLParagraphElement|HTMLPictureElement|HTMLPreElement|HTMLQuoteElement|HTMLShadowElement|HTMLSpanElement|HTMLTableCaptionElement|HTMLTableCellElement|HTMLTableColElement|HTMLTableDataCellElement|HTMLTableHeaderCellElement|HTMLTitleElement|HTMLUListElement|HTMLUnknownElement;HTMLElement;Tt|TR|ir|hs|LP|AR|ic|Qr|qa|GB|Wm|D8|bSO|Zq|vu|xS|hpP|yU|ic7|ph|qaJ|HX|caf|na|wJj|MS|Fq|Vnk|yO|DCb|Kg|Wma|H3|Sba|W1|naa|ws|GZ|AO|b5|eS|vi|Y1|b7|n0|SD|Ek|Ue|b9|XV|b10|F1"},
+"%":"HTMLAppletElement|HTMLBRElement|HTMLCanvasElement|HTMLContentElement|HTMLDListElement|HTMLDataListElement|HTMLDirectoryElement|HTMLDivElement|HTMLFontElement|HTMLFrameElement|HTMLHeadElement|HTMLHeadingElement|HTMLHtmlElement|HTMLLabelElement|HTMLLegendElement|HTMLMarqueeElement|HTMLModElement|HTMLParagraphElement|HTMLPictureElement|HTMLPreElement|HTMLQuoteElement|HTMLShadowElement|HTMLSpanElement|HTMLTableCaptionElement|HTMLTableCellElement|HTMLTableColElement|HTMLTableDataCellElement|HTMLTableHeaderCellElement|HTMLTitleElement|HTMLUListElement|HTMLUnknownElement;HTMLElement;Tt|TR|ir|hs|LP|AR|ic|Qr|qa|GB|Wm|D8|bSO|Zq|vu|xS|hpP|yU|ic7|ph|qaJ|HX|caf|na|wJj|MS|Fq|Vnk|yO|DCb|Kg|Wma|H3|Sba|W1|naa|ws|GZ|AO|b5|eS|vi|Y1|b7|n0|SD|Ek|Ue|b9|XV|b10|F1"},
 SV:{
 "^":"Gv;",
 $iszM:true,
@@ -7552,9 +7544,6 @@ $isD0:true,
 QW:{
 "^":"qE;kN:autofocus=,lz:disabled=,oc:name=,t5:type%,da:validationMessage=,xh:validity=,P:value%",
 "%":"HTMLButtonElement"},
-Ny:{
-"^":"qE;fg:height},R:width}",
-"%":"HTMLCanvasElement"},
 nx:{
 "^":"KV;B:length=,Wq:nextElementSibling=",
 "%":"Comment;CharacterData"},
@@ -7707,7 +7696,7 @@ $iscv:true,
 $isD0:true,
 "%":";Element"},
 Fs:{
-"^":"qE;fg:height},oc:name=,LA:src%,t5:type%,R:width}",
+"^":"qE;oc:name=,LA:src%,t5:type%",
 "%":"HTMLEmbedElement"},
 Ty:{
 "^":"ea;kc:error=",
@@ -7779,17 +7768,17 @@ Vi:{
 "^":"D0;",
 "%":";XMLHttpRequestEventTarget"},
 tX:{
-"^":"qE;fg:height},oc:name=,LA:src%,R:width}",
+"^":"qE;oc:name=,LA:src%",
 "%":"HTMLIFrameElement"},
 Sg:{
 "^":"Gv;",
 $isSg:true,
 "%":"ImageData"},
 pA:{
-"^":"qE;fg:height},LA:src%,R:width}",
+"^":"qE;LA:src%",
 "%":"HTMLImageElement"},
 Mi:{
-"^":"qE;kN:autofocus=,lz:disabled=,fg:height},A5:max=,Bp:min=,oc:name=,zO:pattern=,bO:placeholder=,SY:required=,LA:src%,YD:step=,t5:type%,da:validationMessage=,xh:validity=,P:value%,R:width}",
+"^":"qE;kN:autofocus=,lz:disabled=,A5:max=,Bp:min=,oc:name=,zO:pattern=,bO:placeholder=,SY:required=,LA:src%,YD:step=,t5:type%,da:validationMessage=,xh:validity=,P:value%",
 RR:function(a,b){return a.accept.$1(b)},
 $iscv:true,
 $isD0:true,
@@ -7809,7 +7798,7 @@ YI:{
 "%":"HTMLMapElement"},
 El:{
 "^":"qE;kc:error=,LA:src%",
-"%":"HTMLAudioElement;HTMLMediaElement"},
+"%":"HTMLAudioElement|HTMLMediaElement|HTMLVideoElement"},
 tA:{
 "^":"D0;jO:id=,ph:label=",
 "%":"MediaStream"},
@@ -7897,7 +7886,7 @@ KY:{
 "^":"qE;JS:reversed%,M:start=,t5:type%",
 "%":"HTMLOListElement"},
 G7:{
-"^":"qE;fg:height},oc:name=,t5:type%,da:validationMessage=,xh:validity=,R:width}",
+"^":"qE;oc:name=,t5:type%,da:validationMessage=,xh:validity=",
 "%":"HTMLObjectElement"},
 l9:{
 "^":"qE;lz:disabled=,ph:label=",
@@ -7974,9 +7963,6 @@ QG:{
 by:{
 "^":"Gv;Fz:valid=",
 "%":"ValidityState"},
-Rg:{
-"^":"El;fg:height},R:width}",
-"%":"HTMLVideoElement"},
 K5:{
 "^":"D0;oc:name=",
 ne:function(a,b){return a.requestAnimationFrame(H.tR(b,1))},
@@ -8579,7 +8565,7 @@ um:{
 Fu:{
 "^":"d5;t5:type=,yG:result=",
 "%":"SVGFETurbulenceElement"},
-QN:{
+OE:{
 "^":"d5;LU:href=",
 "%":"SVGFilterElement"},
 tp:{
@@ -11271,7 +11257,7 @@ H.VM(new P.B2(H.VM(new P.vs(0,$.X3,null),[null])),[null]).w0("Error evaluating e
 TR:function(a,b){var z,y
 if(this.BW!=null)throw H.b(P.w("already open"))
 this.BW=b
-z=J.CX(this.Gb,new K.XZ(P.NZ(null,null)))
+z=J.CX(this.Gb,new K.rd(P.NZ(null,null)))
 this.n1=z
 y=z.gE6().Qr(this.gPy())
 y.fm(0,new T.Tg(this))
@@ -11561,7 +11547,7 @@ return z==null?null:y.$1(z)},
 RD:function(a){return J.xC(J.CX(a.gdc(),this),!0)?J.CX(a.gav(),this):J.CX(a.grM(),this)},
 ky:function(a){return H.vh(P.f("can't eval an 'in' expression"))},
 eS:function(a){return H.vh(P.f("can't eval an 'as' expression"))}},
-XZ:{
+rd:{
 "^":"fr;ZG",
 W9:function(a){return new K.Wh(a,null,null,null,P.bK(null,null,!1,null))},
 Hs:function(a){return a.CR.RR(0,this)},
@@ -13639,7 +13625,6 @@ J.Nj=function(a,b,c){return J.rY(a).Nj(a,b,c)}
 J.Nl=function(a){return J.RE(a).gO3(a)}
 J.O1=function(a){return J.RE(a).gVM(a)}
 J.OD=function(a){return J.RE(a).gxh(a)}
-J.OE=function(a,b){return J.RE(a).sfg(a,b)}
 J.OG=function(a){return J.RE(a).gwd(a)}
 J.PR=function(a){return J.RE(a).gA5(a)}
 J.PY=function(a){return J.RE(a).gRG(a)}
@@ -13845,7 +13830,6 @@ C.wG=E.W1.prototype
 C.Rp=V.ws.prototype
 C.YX=T.AO.prototype
 C.Ba=V.GZ.prototype
-C.rd=W.oJ.prototype
 C.DN=W.He.prototype
 C.Dt=W.zU.prototype
 C.Nm=J.Q.prototype
