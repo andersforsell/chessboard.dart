@@ -29,10 +29,18 @@ class ChessBoardApp extends PolymerElement {
       _resize();
     });
 
+    window.onDeviceOrientation.listen((e) {
+      _resize();
+    });
+
     navicon.onClick.listen((e) => drawerPanel.togglePanel());
   }
 
   void _resize() {
+    // Set the viewport attributes again to support device orientation change
+    var viewport = document.querySelector('meta[name=viewport]');
+    viewport.setAttribute('content','width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no');
+
     var mainHeaderPanel = $['main_header_panel'];
     var mainToolbar = $['main_toolbar'];
     var turn = $['turn'];
