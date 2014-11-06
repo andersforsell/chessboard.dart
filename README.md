@@ -17,7 +17,7 @@ A simple example [Chessboard App](http://andersforsell.github.io/chessboard.dart
 TBD
 
 ## Links
-- [chessboard.js](https://github.com/jhlywa/chess.js)
+- [chessboard.js](http://chessboardjs.com/)
 - [chess.dart](https://github.com/davecom/chess.dart)
 - [Polymer](http://www.polymer-project.org/)
 - [Polymer.dart](https://www.dartlang.org/polymer-dart/)
