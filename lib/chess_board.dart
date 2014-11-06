@@ -123,14 +123,14 @@ class ChessBoard extends PolymerElement {
   }
 
   void _addDragDropListeners() {
-    for (var square in _boardElement.querySelectorAll('.square')) {
+    for (Element square in _boardElement.querySelectorAll('.square')) {
       square
           ..onDragEnd.listen(_onDragEnd)
           ..onDragEnter.listen(_onDragEnter)
           ..onDragOver.listen(_onDragOver)
           ..onDragLeave.listen(_onDragLeave)
           ..onDrop.listen(_onDrop)
-          ..onClick.listen(_onClick);
+          ..on['tap'].listen(_onClick);
     }
   }
 
@@ -186,7 +186,7 @@ class ChessBoard extends PolymerElement {
     return boardWidth ~/ 8;
   }
 
-  void _onClick(MouseEvent event) {
+  void _onClick(Event event) {
     if (_dragPiece == null) {
       _onDragStart(event);
     } else {
@@ -195,16 +195,16 @@ class ChessBoard extends PolymerElement {
     }
   }
 
-  void _onDragStart(MouseEvent event) {
+  void _onDragStart(Event event) {
     _dragPiece = event.target;
     _dragPiece.classes.add('moving');
     _dragSquare = _dragPiece.parent;
-    if (event.dataTransfer != null) {
+    if (event is MouseEvent && event.dataTransfer != null) {
       event.dataTransfer.effectAllowed = 'move';
     }
   }
 
-  void _onDragEnd(MouseEvent event) {
+  void _onDragEnd(Event event) {
     _dragPiece.classes.remove('moving');
     var squares = _boardElement.querySelectorAll('.square');
     for (var square in squares) {
@@ -213,13 +213,17 @@ class ChessBoard extends PolymerElement {
     _dragPiece = null;
   }
 
-  void _onDragEnter(MouseEvent event) {
+  void _onDragEnter(Event event) {
     Element dropTarget = _getSquareElement(event);
     if (_getValidMoves(_dragSquare, dropTarget).isNotEmpty) {
-      event.dataTransfer.effectAllowed = 'move';
+      if (event is MouseEvent) {
+        event.dataTransfer.effectAllowed = 'move';
+      }
       dropTarget.classes.add('over');
     } else {
-      event.dataTransfer.effectAllowed = 'none';
+      if (event is MouseEvent) {
+        event.dataTransfer.effectAllowed = 'none';
+      }
     }
   }
 
@@ -234,7 +238,7 @@ class ChessBoard extends PolymerElement {
     dropTarget.classes.remove('over');
   }
 
-  void _onDrop(MouseEvent event) {
+  void _onDrop(Event event) {
     // Stop the browser from redirecting.
     event.stopPropagation();
 
@@ -252,7 +256,7 @@ class ChessBoard extends PolymerElement {
     }
   }
 
-  Element _getSquareElement(MouseEvent event) {
+  Element _getSquareElement(Event event) {
     Element target = event.target;
     if (target.classes.contains('piece')) {
       return target.parent;
