@@ -3212,8 +3212,11 @@ y=this.gKM(a).lr.t(0,"drawerPanel")
 this.xx(a)
 x=H.VM(new W.RO(window,"resize",!1),[null])
 H.VM(new W.Ov(0,x.uv,x.fA,W.VF(new B.Rr(a)),x.el),[H.Kp(x,0)]).DN()
-J.p8(z).Qr(new B.RU(y))},
+x=H.VM(new W.RO(window,"deviceorientation",!1),[null])
+H.VM(new W.Ov(0,x.uv,x.fA,W.VF(new B.RU(a)),x.el),[H.Kp(x,0)]).DN()
+J.p8(z).Qr(new B.R7(y))},
 xx:function(a){var z,y,x,w,v,u,t,s,r,q,p,o,n
+document.querySelector("meta[name=viewport]").setAttribute("content","width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no")
 z=this.gKM(a).lr.t(0,"main_header_panel")
 y=this.gKM(a).lr.t(0,"main_toolbar")
 x=this.gKM(a).lr.t(0,"turn")
@@ -3264,7 +3267,11 @@ $1:[function(a){J.oz(this.a)},"$1",null,2,0,null,2,"call"],
 $isEH:true},
 RU:{
 "^":"Tp:50;b",
-$1:[function(a){return J.zI(this.b)},"$1",null,2,0,null,2,"call"],
+$1:[function(a){J.oz(this.b)},"$1",null,2,0,null,2,"call"],
+$isEH:true},
+R7:{
+"^":"Tp:50;c",
+$1:[function(a){return J.zI(this.c)},"$1",null,2,0,null,2,"call"],
 $isEH:true},
 OV:{
 "^":"Tp:50;a",
@@ -10172,7 +10179,7 @@ F1:{
 gN:function(a){return J.UQ(this.giw(a),"target")},
 gz:function(a){return J.UQ(this.giw(a),"z")},
 sz:function(a,b){J.qQ(this.giw(a),"z",b)},
-static:{R7:function(a){a.toString
+static:{AZ:function(a){a.toString
 C.Gs.LX(a)
 return a}}},
 b10:{
@@ -14267,7 +14274,7 @@ init.isHunkLoaded=function(a){return!!$dart_deferred_initializers[a]}
 init.initializeLoadedHunk=function(a){$dart_deferred_initializers[a](S0,$)}
 init.deferredLibraryUris={}
 init.deferredLibraryHashes={}
-$.AZ=null
+$.VzC=null
 $.Fd=1
 $.z7="$cachedFunction"
 $.eb="$cachedInvocation"
@@ -14310,7 +14317,7 @@ $.M6=null
 $.UG=!0
 $.hQ=null
 $.fH=null
-$.Au=[C.rc,W.qE,{},C.Xs,L.XV,{created:L.H5},C.KS,S.Zq,{created:S.qv},C.Px,G.AR,{created:G.bk},C.ns,M.vu,{created:M.EvT},C.JR,Q.xS,{created:Q.oh},C.Pu,V.GZ,{created:V.kl9},C.jY,D.na,{created:D.oC},C.rR,D.n0,{created:D.S2},C.et,Z.F1,{created:Z.R7},C.zK,T.GB,{created:T.EG},C.Oj,E.HX,{created:E.Ou},C.FJ,D.Kg,{created:D.ma},C.Q4,Y.Qr,{created:Y.zE},C.hG,A.ir,{created:A.Fh},C.te,E.W1,{created:E.vh4},C.Vg,F.SD,{created:F.ML},C.HW,G.yU,{created:G.UO},C.tg,U.yO,{created:U.tm},C.hm,L.Y1,{created:L.oM},C.Qy,T.AO,{created:T.DX},C.hh,D.eS,{created:D.hS},C.ms,O.Fq,{created:O.UVV},C.l1,T.H3,{created:T.BO},C.Ev,B.hs,{created:B.lIq},C.Jm,Y.q6,{created:Y.Cc},C.Tj,T.Ek,{created:T.MC},C.Qw,V.ws,{created:V.qb},C.vQ,L.D8,{created:L.R1},C.j1,V.vi,{created:V.RP},C.c5,K.ph,{created:K.JN},C.fk,Y.Ue,{created:Y.n8},C.Dr,S.MS,{created:S.wC}]
+$.Au=[C.rc,W.qE,{},C.Xs,L.XV,{created:L.H5},C.KS,S.Zq,{created:S.qv},C.Px,G.AR,{created:G.bk},C.ns,M.vu,{created:M.EvT},C.JR,Q.xS,{created:Q.oh},C.Pu,V.GZ,{created:V.kl9},C.jY,D.na,{created:D.oC},C.rR,D.n0,{created:D.S2},C.et,Z.F1,{created:Z.AZ},C.zK,T.GB,{created:T.EG},C.Oj,E.HX,{created:E.Ou},C.FJ,D.Kg,{created:D.ma},C.Q4,Y.Qr,{created:Y.zE},C.hG,A.ir,{created:A.Fh},C.te,E.W1,{created:E.vh4},C.Vg,F.SD,{created:F.ML},C.HW,G.yU,{created:G.UO},C.tg,U.yO,{created:U.tm},C.hm,L.Y1,{created:L.oM},C.Qy,T.AO,{created:T.DX},C.hh,D.eS,{created:D.hS},C.ms,O.Fq,{created:O.UVV},C.l1,T.H3,{created:T.BO},C.Ev,B.hs,{created:B.lIq},C.Jm,Y.q6,{created:Y.Cc},C.Tj,T.Ek,{created:T.MC},C.Qw,V.ws,{created:V.qb},C.vQ,L.D8,{created:L.R1},C.j1,V.vi,{created:V.RP},C.c5,K.ph,{created:K.JN},C.fk,Y.Ue,{created:Y.n8},C.Dr,S.MS,{created:S.wC}]
 I.$lazy($,"thisScript","SU","Zt",function(){return H.yl()})
 I.$lazy($,"workerIds","rS","p6",function(){return H.VM(new P.qo(null),[P.KN])})
 I.$lazy($,"noSuchMethodPattern","lm","WD",function(){return H.cM(H.S7({toString:function(){return"$receiver$"}}))})
