@@ -58,8 +58,8 @@ class ChessBoardApp extends PolymerElement {
   }
 
   void onMove(CustomEvent event, detail, target) {
-    ChessBoard chess = event.target;
-    print('Move event, next turn is ${target.turn}');
+    ChessBoard chess = target;
+    print('Move event, next turn is ${chess.turn}');
   }
 
   void loadGameClicked(Event event, var detail, Node target) {
