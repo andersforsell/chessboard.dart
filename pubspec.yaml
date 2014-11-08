@@ -1,5 +1,5 @@
 name: chessboard
-version: 0.0.9
+version: 0.0.10
 author: Anders Forsell <aforsell1971@gmail.com>
 description: chessboard.dart is derived from chessboard.js, but created as a Polymer element (web component) that provides an easy way to include a chessboard in a web application.
 homepage: https://github.com/andersforsell/chessboard.dart

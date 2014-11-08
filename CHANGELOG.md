@@ -1,4 +1,8 @@
 
+### 0.0.10
+
+Changed fron on-click to on-tap for buttons.
+
 ### 0.0.9
 
 Fixed warnings and a paper_dialog error.
