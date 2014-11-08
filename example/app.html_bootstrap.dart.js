@@ -3234,8 +3234,7 @@ n=J.RE(o)
 n.sR(o,""+P.J(t-s-r-q-40,u-40)+"px")
 n.sfg(o,J.YD(p.gS(v)))
 p.PZ(v)},
-Zi:[function(a,b,c,d){J.l2(b)
-P.mp("Move event, next turn is "+H.d(J.tU(d)))},"$3","gGX",6,0,79,80,81,82],
+Zi:[function(a,b,c,d){P.mp("Move event, next turn is "+H.d(J.tU(d)))},"$3","gGX",6,0,79,80,81,82],
 n2:[function(a,b,c,d){J.oT(this.gKM(a).lr.t(0,"loaddlg"))},"$3","gSh",6,0,83,80,81,82],
 na:[function(a,b,c,d){var z,y
 z=this.gKM(a).lr.t(0,"pos_input")

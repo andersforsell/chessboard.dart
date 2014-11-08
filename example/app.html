@@ -6598,8 +6598,8 @@ polyfill-next-selector { content: ':host > *'; }
       <core-header-panel id="main_header_panel" main="">
         <core-toolbar id="main_toolbar">
           <span flex="">Chessboard App</span>
-          <paper-icon-button id="undo_move" icon="undo" on-click="{{undoClicked}}"></paper-icon-button>
-          <paper-icon-button id="load_game" icon="file-download" on-click="{{loadGameClicked}}"></paper-icon-button>
+          <paper-icon-button id="undo_move" icon="undo" on-tap="{{undoClicked}}"></paper-icon-button>
+          <paper-icon-button id="load_game" icon="file-download" on-tap="{{loadGameClicked}}"></paper-icon-button>
           <paper-icon-button id="navicon" icon="menu"></paper-icon-button>
         </core-toolbar>
         <div class="content">
@@ -6612,7 +6612,7 @@ polyfill-next-selector { content: ':host > *'; }
     <paper-dialog id="loaddlg" style="width:80%" heading="Load Game">
       <paper-input id="pos_input" multiline="" style="width:100%" label="FEN or PGN"></paper-input>
       <paper-button dismissive="">Cancel</paper-button>
-      <paper-button affirmative="" autofocus="" on-click="{{okClicked}}">OK</paper-button>
+      <paper-button affirmative="" autofocus="" on-tap="{{okClicked}}">OK</paper-button>
     </paper-dialog>
   </template>
   
