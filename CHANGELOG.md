@@ -1,3 +1,6 @@
+### 0.1.0
+
+Fixed problem with promotion dialogs.
 
 ### 0.0.10
 

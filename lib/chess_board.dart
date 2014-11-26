@@ -13,7 +13,6 @@ library chessboard;
 import 'dart:html';
 import 'package:polymer/polymer.dart';
 import 'package:chess/chess.dart';
-import 'package:paper_elements/paper_dialog.dart';
 
 /**
  * A Polymer chessboard element.
@@ -52,8 +51,6 @@ class ChessBoard extends PolymerElement {
 
   // Pawn promotion moves
   List<Move> _promotionMoves;
-
-  PaperDialog _promotionDlg;
 
   Chess _currentPosition;
 
@@ -96,10 +93,10 @@ class ChessBoard extends PolymerElement {
 
   void _setPromotionDialogAttributes() {
     for (Element button in $['white_promo'].children) {
-      button.setAttribute('iconSrc', _buildPieceImgSrc(button.id));
+      button.setAttribute('src', _buildPieceImgSrc(button.id));
     }
     for (Element button in $['black_promo'].children) {
-      button.setAttribute('iconSrc', _buildPieceImgSrc(button.id));
+      button.setAttribute('src', _buildPieceImgSrc(button.id));
     }
   }
 
@@ -248,8 +245,10 @@ class ChessBoard extends PolymerElement {
     var moves = _getValidMoves(_dragSquare, dropTarget);
     if (moves.length > 1) {
       // Pawn promotion
-      _promotionDlg = _boardElement.querySelector('#white_promo');
-      _promotionDlg.opened = true;
+      if (turn == WHITE)
+        $['white_promo'].toggle();
+      else
+        $['black_promo'].toggle();
       _promotionMoves = moves;
     } else if (moves.length == 1) {
       _movePiece(moves[0]);
@@ -287,7 +286,10 @@ class ChessBoard extends PolymerElement {
         if (move.promotion.name == promotionPiece) {
           _movePiece(move);
           _promotionMoves = null;
-          _promotionDlg.opened = false;
+          if (turn == BLACK)
+            $['white_promo'].toggle();
+          else
+            $['black_promo'].toggle();
           return;
         }
       }

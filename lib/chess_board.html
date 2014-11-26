@@ -3,8 +3,8 @@
 <!-- import Polymer -->
 <link rel="import" href="../../packages/polymer/polymer.html">
 
-<!-- import the paper elements -->
-<link rel="import" href="../../packages/paper_elements/paper_button.html">
+<!-- import the elements -->
+<link rel="import" href="../../packages/core_elements/core_icon.html">
 <link rel="import" href="../../packages/paper_elements/paper_dialog_transition.html">
 <link rel="import" href="../../packages/paper_elements/paper_dialog.html">
 
@@ -91,20 +91,26 @@
         -webkit-filter: drop-shadow( 2px 2px 2px #333 );
         filter: drop-shadow( 2px 2px 2px #333 );
       }
+
     </style>
     <div id="board">
-      <!-- Promotion dialogs -->
-      <paper-dialog id='white_promo'>
-        <paper-button id='wQ' on-click="{{promotionClicked}}"></paper-button>
-        <paper-button id='wR' on-click="{{promotionClicked}}"></paper-button>
-        <paper-button id='wN' on-click="{{promotionClicked}}"></paper-button>
-        <paper-button id='wB' on-click="{{promotionClicked}}"></paper-button>
+      <!-- White promotion dialog -->
+      <paper-dialog id='white_promo' autoCloseDisabled>
+        <template repeat="{{id in ['wQ','wR','wN','wB']}}">
+          <core-icon id='{{id}}'
+            style="width:{{squareSize}}px;height:{{squareSize}}px"
+            on-tap="{{promotionClicked}}">
+          </core-icon>
+        </template>
       </paper-dialog>
-      <paper-dialog id='black_promo'>
-        <paper-button id='bQ' on-click="{{promotionClicked}}"></paper-button>
-        <paper-button id='bR' on-click="{{promotionClicked}}"></paper-button>
-        <paper-button id='bN' on-click="{{promotionClicked}}"></paper-button>
-        <paper-button id='bB' on-click="{{promotionClicked}}"></paper-button>
+      <!-- Black promotion dialog -->
+      <paper-dialog id='black_promo' autoCloseDisabled>
+        <template repeat="{{id in ['bQ','bR','bN','bB']}}">
+          <core-icon id='{{id}}'
+            style="width:{{squareSize}}px;height:{{squareSize}}px"
+            on-tap="{{promotionClicked}}">
+          </core-icon>
+        </template>
       </paper-dialog>
       <!-- Board squares -->
       <template repeat="{{row in (reversed  ? [1,2,3,4,5,6,7,8] : [8,7,6,5,4,3,2,1])}}">
