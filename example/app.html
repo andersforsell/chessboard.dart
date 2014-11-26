@@ -2738,215 +2738,6 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
 </script>
 
 
-
-<polymer-element name="paper-focusable" attributes="active focused disabled isToggle" tabindex="0" on-down="{{downAction}}" on-up="{{upAction}}" on-focus="{{focusAction}}" on-blur="{{blurAction}}" on-contextmenu="{{contextMenuAction}}">
-
-  <template>
-    <style>
-      :host([disabled]) {
-        pointer-events: none;
-      }
-    </style>
-    <content></content>
-  </template>
-
-  <script>
-    Polymer('paper-focusable', {
-
-      publish: {
-
-        /**
-         * If true, the button is currently active either because the
-         * user is holding down the button, or the button is a toggle
-         * and is currently in the active state.
-         *
-         * @attribute active
-         * @type boolean
-         * @default false
-         */
-        active: {value: false, reflect: true},
-
-        /**
-         * If true, the element currently has focus due to keyboard
-         * navigation.
-         *
-         * @attribute focused
-         * @type boolean
-         * @default false
-         */
-        focused: {value: false, reflect: true},
-
-        /**
-         * If true, the user is currently holding down the button.
-         *
-         * @attribute pressed
-         * @type boolean
-         * @default false
-         */
-        pressed: {value: false, reflect: true},
-
-        /**
-         * If true, the user cannot interact with this element.
-         *
-         * @attribute disabled
-         * @type boolean
-         * @default false
-         */
-        disabled: {value: false, reflect: true},
-
-        /**
-         * If true, the button toggles the active state with each tap.
-         * Otherwise, the button becomes active when the user is holding
-         * it down.
-         *
-         * @attribute isToggle
-         * @type boolean
-         * @default false
-         */
-        isToggle: {value: false, reflect: false}
-
-      },
-
-      disabledChanged: function() {
-        if (this.disabled) {
-          this.removeAttribute('tabindex');
-        } else {
-          this.setAttribute('tabindex', 0);
-        }
-      },
-
-      downAction: function() {
-        this.pressed = true;
-
-        if (this.isToggle) {
-          this.active = !this.active;
-        } else {
-          this.active = true;
-        }
-      },
-
-      // Pulling up the context menu for an item should focus it; but we need to
-      // be careful about how we deal with down/up events surrounding context
-      // menus. The up event typically does not fire until the context menu
-      // closes: so we focus immediately.
-      //
-      // This fires _after_ downAction.
-      contextMenuAction: function(e) {
-        // Note that upAction may fire _again_ on the actual up event.
-        this.upAction(e);
-        this.focusAction();
-      },
-
-      upAction: function() {
-        this.pressed = false;
-
-        if (!this.isToggle) {
-          this.active = false;
-        }
-      },
-
-      focusAction: function() {
-        if (!this.pressed) {
-          // Only render the "focused" state if the element gains focus due to
-          // keyboard navigation.
-          this.focused = true;
-        }
-      },
-
-      blurAction: function() {
-        this.focused = false;
-      }
-
-    });
-
-  </script>
-</polymer-element>
-
-
-<polymer-element name="paper-button-base" extends="paper-focusable">
-
-  <script>
-    Polymer({
-
-      z: 1,
-
-      activeChanged: function() {
-        this.super();
-
-        if (this.active) {
-          // FIXME: remove when paper-ripple can have a default 'down' state.
-          if (!this.lastEvent) {
-            var rect = this.getBoundingClientRect();
-            this.lastEvent = {
-              x: rect.left + rect.width / 2,
-              y: rect.top + rect.height / 2
-            }
-          }
-          this.$.ripple.downAction(this.lastEvent);
-        } else {
-          this.$.ripple.upAction();
-        }
-        this.adjustZ();
-      },
-
-      disabledChanged: function() {
-        this.super();
-        if (this.disabled) {
-          this.setAttribute('aria-disabled', '');
-        } else {
-          this.removeAttribute('aria-disabled');
-        }
-        this.adjustZ();
-      },
-
-      recenteringTouchChanged: function() {
-        if (this.$.ripple) {
-          this.$.ripple.classList.toggle('recenteringTouch', this.recenteringTouch);
-        }
-      },
-
-      fillChanged: function() {
-        if (this.$.ripple) {
-          this.$.ripple.classList.toggle('fill', this.fill);
-        }
-      },
-
-      adjustZ: function() {
-        if (this.active) {
-          this.z = 2;
-        } else if (this.disabled) {
-          this.z = 0;
-        } else {
-          this.z = 1;
-        }
-      },
-
-      downAction: function(e) {
-        this.super(e);
-        this.lastEvent = e;
-        if (!this.$.ripple) {
-          var ripple = document.createElement('paper-ripple');
-          ripple.setAttribute('id', 'ripple');
-          ripple.setAttribute('fit', '');
-          if (this.recenteringTouch) {
-            ripple.classList.add('recenteringTouch');
-          }
-          if (!this.fill) {
-            ripple.classList.add('circle');
-          }
-          this.$.ripple = ripple;
-          this.shadowRoot.insertBefore(ripple, this.shadowRoot.firstChild);
-          // No need to forward the event to the ripple because the ripple
-          // is triggered in activeChanged
-        }
-      }
-
-    });
-  </script>
-</polymer-element>
-
-
-
 <polymer-element name="paper-ripple" attributes="initialOpacity opacityDecayVelocity">
 <template>
 
@@ -3355,6 +3146,603 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
 </polymer-element>
 
 
+
+<polymer-element name="paper-shadow">
+
+  <template>
+
+    <style no-shim="">/*
+ * @license
+ * Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
+ * This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+ * The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+ * The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+ * Code distributed by Google as part of the polymer project is also
+ * subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+ */
+
+.paper-shadow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.paper-shadow-animated.paper-shadow {
+  transition: box-shadow 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.paper-shadow-top-z-1 {
+  box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.16);
+}
+
+.paper-shadow-bottom-z-1 {
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+}
+
+.paper-shadow-top-z-2 {
+  box-shadow: 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+.paper-shadow-bottom-z-2 {
+  box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.2);
+}
+
+.paper-shadow-top-z-3 {
+  box-shadow: 0 17px 50px 0 rgba(0, 0, 0, 0.19);
+}
+
+.paper-shadow-bottom-z-3 {
+  box-shadow: 0 12px 15px 0 rgba(0, 0, 0, 0.24);
+}
+
+.paper-shadow-top-z-4 {
+  box-shadow: 0 25px 55px 0 rgba(0, 0, 0, 0.21);
+}
+
+.paper-shadow-bottom-z-4 {
+  box-shadow: 0 16px 28px 0 rgba(0, 0, 0, 0.22);
+}
+
+.paper-shadow-top-z-5 {
+  box-shadow: 0 40px 77px 0 rgba(0, 0, 0, 0.22);
+}
+
+.paper-shadow-bottom-z-5 {
+  box-shadow: 0 27px 24px 0 rgba(0, 0, 0, 0.2);
+}
+
+.paper-shadow-animate-z-1-z-2.paper-shadow-top {
+  -webkit-transition: none;
+  -webkit-animation: animate-shadow-top-z-1-z-2 0.7s infinite alternate;
+}
+
+.paper-shadow-animate-z-1-z-2 .paper-shadow-bottom {
+  -webkit-transition: none;
+  -webkit-animation: animate-shadow-bottom-z-1-z-2 0.7s infinite alternate;
+}
+
+@-webkit-keyframes animate-shadow-top-z-1-z-2 {
+  0% {
+    box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.16);
+  }
+  100% {
+    box-shadow: 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  }
+}
+
+@-webkit-keyframes animate-shadow-bottom-z-1-z-2 {
+  0% {
+    box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+  }
+  100% {
+    box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.2);
+  }
+}</style>
+
+  </template>
+
+  <script>
+    Polymer('paper-shadow', {
+
+      publish: {
+        /**
+         * If set, the shadow is applied to this node.
+         *
+         * @attribute target
+         * @type Element
+         * @default null
+         */
+        target: {value: null, reflect: true},
+
+        /**
+         * The z-depth of this shadow, from 0-5.
+         *
+         * @attribute z
+         * @type number
+         * @default 1
+         */
+        z: {value: 1, reflect: true},
+
+        /**
+         * If true, the shadow animates between z-depth changes.
+         *
+         * @attribute animated
+         * @type boolean
+         * @default false
+         */
+        animated: {value: false, reflect: true},
+
+        /**
+         * Workaround: getComputedStyle is wrong sometimes so `paper-shadow`
+         * may overwrite the `position` CSS property. Set this property to
+         * true to prevent this.
+         *
+         * @attribute hasPosition
+         * @type boolean
+         * @default false
+         */
+        hasPosition: false
+      },
+
+      // NOTE: include template so that styles are loaded, but remove
+      // so that we can decide dynamically what part to include
+      registerCallback: function(polymerElement) {
+        var template = polymerElement.querySelector('template');
+        this._style = template.content.querySelector('style');
+        this._style.removeAttribute('no-shim');
+      },
+
+      fetchTemplate: function() {
+        return null;
+      },
+
+      attached: function() {
+        // If no target is bound at attach, default the target to the parent
+        // element or shadow host.
+        if (!this.target) {
+          if (!this.parentElement && this.parentNode.host) {
+            this.target = this.parentNode.host;
+          } else if (this.parentElement && (window.ShadowDOMPolyfill ? this.parentElement !== wrap(document.body) : this.parentElement !== document.body)) {
+            this.target = this.parentElement;
+          }
+        }
+      },
+
+      targetChanged: function(old) {
+        if (old) {
+          this.removeShadow(old);
+        }
+        if (this.target) {
+          this.addShadow(this.target);
+        }
+      },
+
+      zChanged: function(old) {
+        if (this.target && this.target._paperShadow) {
+          var shadow = this.target._paperShadow;
+          ['top', 'bottom'].forEach(function(s) {
+            shadow[s].classList.remove('paper-shadow-' + s + '-z-' + old);
+            shadow[s].classList.add('paper-shadow-' + s + '-z-' + this.z);
+          }.bind(this));
+        }
+      },
+
+      animatedChanged: function() {
+        if (this.target && this.target._paperShadow) {
+          var shadow = this.target._paperShadow;
+          ['top', 'bottom'].forEach(function(s) {
+            if (this.animated) {
+              shadow[s].classList.add('paper-shadow-animated');
+            } else {
+              shadow[s].classList.remove('paper-shadow-animated');
+            }
+          }.bind(this));
+        }
+      },
+
+      addShadow: function(node) {
+        if (node._paperShadow) {
+          return;
+        }
+
+        if (!node._hasShadowStyle) {
+          if (!node.shadowRoot) {
+            node.createShadowRoot().innerHTML = '<content></content>';
+          }
+          this.installScopeStyle(this._style, 'shadow', node.shadowRoot);
+          node._hasShadowStyle = true;
+        }
+
+        var computed = getComputedStyle(node);
+        if (!this.hasPosition && computed.position === 'static') {
+          node.style.position = 'relative';
+        }
+        node.style.overflow = 'visible';
+
+        // Both the top and bottom shadows are children of the target, so
+        // it does not affect the classes and CSS properties of the target.
+        ['top', 'bottom'].forEach(function(s) {
+          var inner = (node._paperShadow && node._paperShadow[s]) || document.createElement('div');
+          inner.classList.add('paper-shadow');
+          inner.classList.add('paper-shadow-' + s + '-z-' + this.z);
+          if (this.animated) {
+            inner.classList.add('paper-shadow-animated');
+          }
+
+          if (node.shadowRoot) {
+            node.shadowRoot.insertBefore(inner, node.shadowRoot.firstChild);
+          } else {
+            node.insertBefore(inner, node.firstChild);
+          }
+
+          node._paperShadow = node._paperShadow || {};
+          node._paperShadow[s] = inner;
+        }.bind(this));
+
+      },
+
+      removeShadow: function(node) {
+        if (!node._paperShadow) {
+          return;
+        }
+
+        ['top', 'bottom'].forEach(function(s) {
+          node._paperShadow[s].remove();
+        });
+        node._paperShadow = null;
+
+        node.style.position = null;
+      }
+
+    });
+  </script>
+</polymer-element>
+
+
+
+
+
+<polymer-element name="paper-focusable" attributes="active focused disabled isToggle" tabindex="0" on-down="{{downAction}}" on-up="{{upAction}}" on-focus="{{focusAction}}" on-blur="{{blurAction}}" on-contextmenu="{{contextMenuAction}}">
+
+  <template>
+    <style>
+      :host([disabled]) {
+        pointer-events: none;
+      }
+    </style>
+    <content></content>
+  </template>
+
+  <script>
+    Polymer('paper-focusable', {
+
+      publish: {
+
+        /**
+         * If true, the button is currently active either because the
+         * user is holding down the button, or the button is a toggle
+         * and is currently in the active state.
+         *
+         * @attribute active
+         * @type boolean
+         * @default false
+         */
+        active: {value: false, reflect: true},
+
+        /**
+         * If true, the element currently has focus due to keyboard
+         * navigation.
+         *
+         * @attribute focused
+         * @type boolean
+         * @default false
+         */
+        focused: {value: false, reflect: true},
+
+        /**
+         * If true, the user is currently holding down the button.
+         *
+         * @attribute pressed
+         * @type boolean
+         * @default false
+         */
+        pressed: {value: false, reflect: true},
+
+        /**
+         * If true, the user cannot interact with this element.
+         *
+         * @attribute disabled
+         * @type boolean
+         * @default false
+         */
+        disabled: {value: false, reflect: true},
+
+        /**
+         * If true, the button toggles the active state with each tap.
+         * Otherwise, the button becomes active when the user is holding
+         * it down.
+         *
+         * @attribute isToggle
+         * @type boolean
+         * @default false
+         */
+        isToggle: {value: false, reflect: false}
+
+      },
+
+      disabledChanged: function() {
+        if (this.disabled) {
+          this.removeAttribute('tabindex');
+        } else {
+          this.setAttribute('tabindex', 0);
+        }
+      },
+
+      downAction: function() {
+        this.pressed = true;
+
+        if (this.isToggle) {
+          this.active = !this.active;
+        } else {
+          this.active = true;
+        }
+      },
+
+      // Pulling up the context menu for an item should focus it; but we need to
+      // be careful about how we deal with down/up events surrounding context
+      // menus. The up event typically does not fire until the context menu
+      // closes: so we focus immediately.
+      //
+      // This fires _after_ downAction.
+      contextMenuAction: function(e) {
+        // Note that upAction may fire _again_ on the actual up event.
+        this.upAction(e);
+        this.focusAction();
+      },
+
+      upAction: function() {
+        this.pressed = false;
+
+        if (!this.isToggle) {
+          this.active = false;
+        }
+      },
+
+      focusAction: function() {
+        if (!this.pressed) {
+          // Only render the "focused" state if the element gains focus due to
+          // keyboard navigation.
+          this.focused = true;
+        }
+      },
+
+      blurAction: function() {
+        this.focused = false;
+      }
+
+    });
+
+  </script>
+</polymer-element>
+
+
+<polymer-element name="paper-button-base" extends="paper-focusable">
+
+  <script>
+    Polymer({
+
+      z: 1,
+
+      activeChanged: function() {
+        this.super();
+
+        if (this.active) {
+          // FIXME: remove when paper-ripple can have a default 'down' state.
+          if (!this.lastEvent) {
+            var rect = this.getBoundingClientRect();
+            this.lastEvent = {
+              x: rect.left + rect.width / 2,
+              y: rect.top + rect.height / 2
+            }
+          }
+          this.$.ripple.downAction(this.lastEvent);
+        } else {
+          this.$.ripple.upAction();
+        }
+        this.adjustZ();
+      },
+
+      disabledChanged: function() {
+        this.super();
+        if (this.disabled) {
+          this.setAttribute('aria-disabled', '');
+        } else {
+          this.removeAttribute('aria-disabled');
+        }
+        this.adjustZ();
+      },
+
+      recenteringTouchChanged: function() {
+        if (this.$.ripple) {
+          this.$.ripple.classList.toggle('recenteringTouch', this.recenteringTouch);
+        }
+      },
+
+      fillChanged: function() {
+        if (this.$.ripple) {
+          this.$.ripple.classList.toggle('fill', this.fill);
+        }
+      },
+
+      adjustZ: function() {
+        if (this.active) {
+          this.z = 2;
+        } else if (this.disabled) {
+          this.z = 0;
+        } else {
+          this.z = 1;
+        }
+      },
+
+      downAction: function(e) {
+        this.super(e);
+        this.lastEvent = e;
+        if (!this.$.ripple) {
+          var ripple = document.createElement('paper-ripple');
+          ripple.setAttribute('id', 'ripple');
+          ripple.setAttribute('fit', '');
+          if (this.recenteringTouch) {
+            ripple.classList.add('recenteringTouch');
+          }
+          if (!this.fill) {
+            ripple.classList.add('circle');
+          }
+          this.$.ripple = ripple;
+          this.shadowRoot.insertBefore(ripple, this.shadowRoot.firstChild);
+          // No need to forward the event to the ripple because the ripple
+          // is triggered in activeChanged
+        }
+      }
+
+    });
+  </script>
+</polymer-element>
+
+
+<polymer-element name="paper-button" extends="paper-button-base" attributes="raised recenteringTouch fill" role="button">
+
+  <template>
+
+    <style>
+
+      :host {
+        display: inline-block;
+        position: relative;
+        box-sizing: border-box;
+        min-width: 5.14em;
+        padding: 0.7em 0.57em;
+        margin: 0 0.29em;
+        background: transparent;
+        text-align: center;
+        font: inherit;
+        text-transform: uppercase;
+        outline: none;
+        border-radius: 3px;
+        -webkit-user-select: none;
+        user-select: none;
+        cursor: pointer;
+        z-index: 0;
+      }
+
+      :host([disabled]) {
+        background: #eaeaea !important;
+        color: #a8a8a8 !important;
+        cursor: auto;
+        pointer-events: none;
+      }
+
+      ::content * {
+        text-transform: inherit;
+      }
+
+      #ripple {
+        pointer-events: none;
+        z-index: -1;
+      }
+
+    </style>
+
+    <template if="{{raisedButton || raised}}">
+      <paper-shadow id="shadow" z="{{z}}" animated=""></paper-shadow>
+    </template>
+
+    <!-- this div is needed to position the ripple behind text content -->
+    <div relative="">
+      <content></content>
+      {{label}}
+    </div>
+
+  </template>
+
+  <script>
+    Polymer({
+
+      publish: {
+
+        label: '',
+
+        /**
+         * If true, the button will be styled with a shadow.
+         *
+         * @attribute raised
+         * @type boolean
+         * @default false
+         */
+        raised: false,
+        raisedButton: false,
+
+        /**
+         * By default the ripple emanates from where the user touched the button.
+         * Set this to true to always center the ripple.
+         *
+         * @attribute recenteringTouch
+         * @type boolean
+         * @default false
+         */
+        recenteringTouch: false,
+
+        /**
+         * By default the ripple expands to fill the button. Set this to true to
+         * constrain the ripple to a circle within the button.
+         *
+         * @attribute fill
+         * @type boolean
+         * @default true
+         */
+        fill: true
+
+      },
+
+      labelChanged: function() {
+        if (this.label) {
+          console.warn('The "label" property is deprecated.');
+        }
+      },
+
+      raisedButtonChanged: function() {
+        if (this.raisedButton) {
+          console.warn('The "raisedButton" property is deprecated.');
+        }
+      }
+
+    });
+  </script>
+</polymer-element>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <polymer-element name="paper-icon-button" extends="paper-button-base" attributes="src icon" role="button">
 
   <template>
@@ -3428,13 +3816,6 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
   </script>
 
 </polymer-element>
-
-
-
-
-
-
-
 
 
 
@@ -4670,387 +5051,7 @@ textarea {
 <!-- import the chess-board -->
 
 
-<!-- import the paper elements -->
-
-
-
-
-
-<polymer-element name="paper-shadow">
-
-  <template>
-
-    <style no-shim="">/*
- * @license
- * Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
- * The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
- * The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
- * Code distributed by Google as part of the polymer project is also
- * subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
- */
-
-.paper-shadow {
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  border-radius: inherit;
-  pointer-events: none;
-}
-
-.paper-shadow-animated.paper-shadow {
-  transition: box-shadow 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.paper-shadow-top-z-1 {
-  box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.16);
-}
-
-.paper-shadow-bottom-z-1 {
-  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
-}
-
-.paper-shadow-top-z-2 {
-  box-shadow: 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-}
-
-.paper-shadow-bottom-z-2 {
-  box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.2);
-}
-
-.paper-shadow-top-z-3 {
-  box-shadow: 0 17px 50px 0 rgba(0, 0, 0, 0.19);
-}
-
-.paper-shadow-bottom-z-3 {
-  box-shadow: 0 12px 15px 0 rgba(0, 0, 0, 0.24);
-}
-
-.paper-shadow-top-z-4 {
-  box-shadow: 0 25px 55px 0 rgba(0, 0, 0, 0.21);
-}
-
-.paper-shadow-bottom-z-4 {
-  box-shadow: 0 16px 28px 0 rgba(0, 0, 0, 0.22);
-}
-
-.paper-shadow-top-z-5 {
-  box-shadow: 0 40px 77px 0 rgba(0, 0, 0, 0.22);
-}
-
-.paper-shadow-bottom-z-5 {
-  box-shadow: 0 27px 24px 0 rgba(0, 0, 0, 0.2);
-}
-
-.paper-shadow-animate-z-1-z-2.paper-shadow-top {
-  -webkit-transition: none;
-  -webkit-animation: animate-shadow-top-z-1-z-2 0.7s infinite alternate;
-}
-
-.paper-shadow-animate-z-1-z-2 .paper-shadow-bottom {
-  -webkit-transition: none;
-  -webkit-animation: animate-shadow-bottom-z-1-z-2 0.7s infinite alternate;
-}
-
-@-webkit-keyframes animate-shadow-top-z-1-z-2 {
-  0% {
-    box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.16);
-  }
-  100% {
-    box-shadow: 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-  }
-}
-
-@-webkit-keyframes animate-shadow-bottom-z-1-z-2 {
-  0% {
-    box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
-  }
-  100% {
-    box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.2);
-  }
-}</style>
-
-  </template>
-
-  <script>
-    Polymer('paper-shadow', {
-
-      publish: {
-        /**
-         * If set, the shadow is applied to this node.
-         *
-         * @attribute target
-         * @type Element
-         * @default null
-         */
-        target: {value: null, reflect: true},
-
-        /**
-         * The z-depth of this shadow, from 0-5.
-         *
-         * @attribute z
-         * @type number
-         * @default 1
-         */
-        z: {value: 1, reflect: true},
-
-        /**
-         * If true, the shadow animates between z-depth changes.
-         *
-         * @attribute animated
-         * @type boolean
-         * @default false
-         */
-        animated: {value: false, reflect: true},
-
-        /**
-         * Workaround: getComputedStyle is wrong sometimes so `paper-shadow`
-         * may overwrite the `position` CSS property. Set this property to
-         * true to prevent this.
-         *
-         * @attribute hasPosition
-         * @type boolean
-         * @default false
-         */
-        hasPosition: false
-      },
-
-      // NOTE: include template so that styles are loaded, but remove
-      // so that we can decide dynamically what part to include
-      registerCallback: function(polymerElement) {
-        var template = polymerElement.querySelector('template');
-        this._style = template.content.querySelector('style');
-        this._style.removeAttribute('no-shim');
-      },
-
-      fetchTemplate: function() {
-        return null;
-      },
-
-      attached: function() {
-        // If no target is bound at attach, default the target to the parent
-        // element or shadow host.
-        if (!this.target) {
-          if (!this.parentElement && this.parentNode.host) {
-            this.target = this.parentNode.host;
-          } else if (this.parentElement && (window.ShadowDOMPolyfill ? this.parentElement !== wrap(document.body) : this.parentElement !== document.body)) {
-            this.target = this.parentElement;
-          }
-        }
-      },
-
-      targetChanged: function(old) {
-        if (old) {
-          this.removeShadow(old);
-        }
-        if (this.target) {
-          this.addShadow(this.target);
-        }
-      },
-
-      zChanged: function(old) {
-        if (this.target && this.target._paperShadow) {
-          var shadow = this.target._paperShadow;
-          ['top', 'bottom'].forEach(function(s) {
-            shadow[s].classList.remove('paper-shadow-' + s + '-z-' + old);
-            shadow[s].classList.add('paper-shadow-' + s + '-z-' + this.z);
-          }.bind(this));
-        }
-      },
-
-      animatedChanged: function() {
-        if (this.target && this.target._paperShadow) {
-          var shadow = this.target._paperShadow;
-          ['top', 'bottom'].forEach(function(s) {
-            if (this.animated) {
-              shadow[s].classList.add('paper-shadow-animated');
-            } else {
-              shadow[s].classList.remove('paper-shadow-animated');
-            }
-          }.bind(this));
-        }
-      },
-
-      addShadow: function(node) {
-        if (node._paperShadow) {
-          return;
-        }
-
-        if (!node._hasShadowStyle) {
-          if (!node.shadowRoot) {
-            node.createShadowRoot().innerHTML = '<content></content>';
-          }
-          this.installScopeStyle(this._style, 'shadow', node.shadowRoot);
-          node._hasShadowStyle = true;
-        }
-
-        var computed = getComputedStyle(node);
-        if (!this.hasPosition && computed.position === 'static') {
-          node.style.position = 'relative';
-        }
-        node.style.overflow = 'visible';
-
-        // Both the top and bottom shadows are children of the target, so
-        // it does not affect the classes and CSS properties of the target.
-        ['top', 'bottom'].forEach(function(s) {
-          var inner = (node._paperShadow && node._paperShadow[s]) || document.createElement('div');
-          inner.classList.add('paper-shadow');
-          inner.classList.add('paper-shadow-' + s + '-z-' + this.z);
-          if (this.animated) {
-            inner.classList.add('paper-shadow-animated');
-          }
-
-          if (node.shadowRoot) {
-            node.shadowRoot.insertBefore(inner, node.shadowRoot.firstChild);
-          } else {
-            node.insertBefore(inner, node.firstChild);
-          }
-
-          node._paperShadow = node._paperShadow || {};
-          node._paperShadow[s] = inner;
-        }.bind(this));
-
-      },
-
-      removeShadow: function(node) {
-        if (!node._paperShadow) {
-          return;
-        }
-
-        ['top', 'bottom'].forEach(function(s) {
-          node._paperShadow[s].remove();
-        });
-        node._paperShadow = null;
-
-        node.style.position = null;
-      }
-
-    });
-  </script>
-</polymer-element>
-
-
-
-
-<polymer-element name="paper-button" extends="paper-button-base" attributes="raised recenteringTouch fill" role="button">
-
-  <template>
-
-    <style>
-
-      :host {
-        display: inline-block;
-        position: relative;
-        box-sizing: border-box;
-        min-width: 5.14em;
-        padding: 0.7em 0.57em;
-        margin: 0 0.29em;
-        background: transparent;
-        text-align: center;
-        font: inherit;
-        text-transform: uppercase;
-        outline: none;
-        border-radius: 3px;
-        -webkit-user-select: none;
-        user-select: none;
-        cursor: pointer;
-        z-index: 0;
-      }
-
-      :host([disabled]) {
-        background: #eaeaea !important;
-        color: #a8a8a8 !important;
-        cursor: auto;
-        pointer-events: none;
-      }
-
-      ::content * {
-        text-transform: inherit;
-      }
-
-      #ripple {
-        pointer-events: none;
-        z-index: -1;
-      }
-
-    </style>
-
-    <template if="{{raisedButton || raised}}">
-      <paper-shadow id="shadow" z="{{z}}" animated=""></paper-shadow>
-    </template>
-
-    <!-- this div is needed to position the ripple behind text content -->
-    <div relative="">
-      <content></content>
-      {{label}}
-    </div>
-
-  </template>
-
-  <script>
-    Polymer({
-
-      publish: {
-
-        label: '',
-
-        /**
-         * If true, the button will be styled with a shadow.
-         *
-         * @attribute raised
-         * @type boolean
-         * @default false
-         */
-        raised: false,
-        raisedButton: false,
-
-        /**
-         * By default the ripple emanates from where the user touched the button.
-         * Set this to true to always center the ripple.
-         *
-         * @attribute recenteringTouch
-         * @type boolean
-         * @default false
-         */
-        recenteringTouch: false,
-
-        /**
-         * By default the ripple expands to fill the button. Set this to true to
-         * constrain the ripple to a circle within the button.
-         *
-         * @attribute fill
-         * @type boolean
-         * @default true
-         */
-        fill: true
-
-      },
-
-      labelChanged: function() {
-        if (this.label) {
-          console.warn('The "label" property is deprecated.');
-        }
-      },
-
-      raisedButtonChanged: function() {
-        if (this.raisedButton) {
-          console.warn('The "raisedButton" property is deprecated.');
-        }
-      }
-
-    });
-  </script>
-</polymer-element>
-
-
-
-
-
-
-
-
+<!-- import the elements -->
 
 
 
@@ -6052,10 +6053,10 @@ object like this: `{v: 'top', h: 'right'}`.
     },
 
     resetTargetDimensions: function() {
-      if (!this.dimensions.size.v) {
+      if (!this.dimensions || !this.dimensions.size.v) {
         this.sizingTarget.style.maxHeight = '';  
       }
-      if (!this.dimensions.size.h) {
+      if (!this.dimensions || !this.dimensions.size.h) {
         this.sizingTarget.style.maxWidth = '';  
       }
       this.dimensions = null;
@@ -6512,20 +6513,22 @@ polyfill-next-selector { content: ':host > *'; }
         -webkit-filter: drop-shadow( 2px 2px 2px #333 );
         filter: drop-shadow( 2px 2px 2px #333 );
       }
+
     </style>
     <div id="board">
-      <!-- Promotion dialogs -->
-      <paper-dialog id="white_promo">
-        <paper-button id="wQ" on-click="{{promotionClicked}}"></paper-button>
-        <paper-button id="wR" on-click="{{promotionClicked}}"></paper-button>
-        <paper-button id="wN" on-click="{{promotionClicked}}"></paper-button>
-        <paper-button id="wB" on-click="{{promotionClicked}}"></paper-button>
+      <!-- White promotion dialog -->
+      <paper-dialog id="white_promo" autoclosedisabled="">
+        <template repeat="{{id in ['wQ','wR','wN','wB']}}">
+          <core-icon id="{{id}}" style="width:{{squareSize}}px;height:{{squareSize}}px" on-tap="{{promotionClicked}}">
+          </core-icon>
+        </template>
       </paper-dialog>
-      <paper-dialog id="black_promo">
-        <paper-button id="bQ" on-click="{{promotionClicked}}"></paper-button>
-        <paper-button id="bR" on-click="{{promotionClicked}}"></paper-button>
-        <paper-button id="bN" on-click="{{promotionClicked}}"></paper-button>
-        <paper-button id="bB" on-click="{{promotionClicked}}"></paper-button>
+      <!-- Black promotion dialog -->
+      <paper-dialog id="black_promo" autoclosedisabled="">
+        <template repeat="{{id in ['bQ','bR','bN','bB']}}">
+          <core-icon id="{{id}}" style="width:{{squareSize}}px;height:{{squareSize}}px" on-tap="{{promotionClicked}}">
+          </core-icon>
+        </template>
       </paper-dialog>
       <!-- Board squares -->
       <template repeat="{{row in (reversed  ? [1,2,3,4,5,6,7,8] : [8,7,6,5,4,3,2,1])}}">
