@@ -1,3 +1,7 @@
+### 0.1.1
+
+Fixed problem on Firefox when moving piece using drag and drop.
+
 ### 0.1.0
 
 Fixed problem with promotion dialogs.

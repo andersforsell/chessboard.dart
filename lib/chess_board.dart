@@ -238,6 +238,7 @@ class ChessBoard extends PolymerElement {
   void _onDrop(Event event) {
     // Stop the browser from redirecting.
     event.stopPropagation();
+    event.preventDefault();
 
     // Don't do anything if dropping onto the same column we're dragging.
     Element dropTarget = _getSquareElement(event);
