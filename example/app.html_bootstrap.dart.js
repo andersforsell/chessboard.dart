@@ -3262,15 +3262,17 @@ z.e6(b)
 z.gtv(b).dropEffect="move"},"$1","gEM",2,0,85,79],
 uC:[function(a,b){J.pP(this.Z0(a,b)).Rz(0,"over")},"$1","gMu",2,0,85,79],
 c6:[function(a,b){var z,y,x
-J.tW(b)
-z=this.Z0(a,b)
-J.pP(z).Rz(0,"over")
-y=this.Rb(a,a.Nh,z)
-x=y.length
-if(x>1){if(J.xC(a.Zb,"White"))J.oT(this.gKM(a).lr.t(0,"white_promo"))
+z=J.RE(b)
+z.C2(b)
+z.e6(b)
+y=this.Z0(a,b)
+J.pP(y).Rz(0,"over")
+x=this.Rb(a,a.Nh,y)
+z=x.length
+if(z>1){if(J.xC(a.Zb,"White"))J.oT(this.gKM(a).lr.t(0,"white_promo"))
 else J.oT(this.gKM(a).lr.t(0,"black_promo"))
-a.SF=y}else if(x===1){x=y[0]
-a.xw.MN(x)
+a.SF=x}else if(z===1){z=x[0]
+a.xw.MN(z)
 this.yt(a)
 this.V2(a)
 a.dispatchEvent(W.Q8("move",!0,!0,null))}},"$1","gd0",2,0,84,79],
@@ -3995,7 +3997,7 @@ return 536870911&664597*z},
 bu:function(a){return"Symbol(\""+H.d(this.OB)+"\")"},
 $iswv:true,
 $isGD:true,
-static:{"^":"RWj,yq,ei,KGP,nc,fb"}}}],["","",,H,{
+static:{"^":"RWj,yq,ei,KGP,Np,fb"}}}],["","",,H,{
 "^":"",
 kU:function(a){var z=H.VM(function(b,c){var y=[]
 for(var x in b){if(c.call(b,x))y.push(x)}return y}(a,Object.prototype.hasOwnProperty),[null])
@@ -13393,7 +13395,6 @@ J.rh=function(a,b){return J.RE(a).Md(a,b)}
 J.ro=function(a){return J.RE(a).gOB(a)}
 J.ry=function(a){return J.RE(a).gYe(a)}
 J.tU=function(a){return J.RE(a).gBh(a)}
-J.tW=function(a){return J.RE(a).C2(a)}
 J.ta=function(a,b){return J.RE(a).sP(a,b)}
 J.tv=function(a){return J.RE(a).gnl(a)}
 J.tx=function(a){return J.RE(a).guD(a)}
