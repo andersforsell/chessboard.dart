@@ -1,3 +1,7 @@
+### 0.1.3
+
+Upgraded to new Polymer version.
+
 ### 0.1.1
 
 Fixed problem on Firefox when moving piece using drag and drop.
