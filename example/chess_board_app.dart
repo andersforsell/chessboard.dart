@@ -7,7 +7,6 @@ import 'dart:html';
 import 'dart:math';
 import 'package:polymer/polymer.dart';
 import 'package:core_elements/core_drawer_panel.dart';
-import 'package:paper_elements/paper_input.dart';
 import 'package:chessboard/chess_board.dart';
 
 /**
@@ -67,7 +66,7 @@ class ChessBoardApp extends PolymerElement {
   }
 
   void okClicked(Event event, var detail, Node target) {
-    PaperInput posInput = $['pos_input'];
+    InputElement posInput = $['pos_input'];
     ChessBoard chessBoard = $['chess_board']..position = posInput.value;
     async((num) => chessBoard.refresh());
   }
