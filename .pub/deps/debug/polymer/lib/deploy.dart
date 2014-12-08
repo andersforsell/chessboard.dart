@@ -160,10 +160,10 @@ ArgResults _parseArgs(arguments) {
           defaultsTo: true)
       ..addFlag('debug', help:
           'run in debug mode. For example, use the debug polyfill \n'
-          'web_components/platform.concat.js instead of the minified one.\n',
+          'web_components/webcomponents.js instead of the minified one.\n',
           defaultsTo: false)
       ..addFlag('csp', help:
-          'replaces *.dart with *.dart.precompiled.js to comply with \n'
+          'extracts inlined JavaScript code to comply with \n'
           'Content Security Policy restrictions.');
   try {
     var results = parser.parse(arguments);

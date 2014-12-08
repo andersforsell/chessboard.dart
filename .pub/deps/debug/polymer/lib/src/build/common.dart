@@ -67,17 +67,12 @@ class TransformOptions {
   final Map<String, bool> inlineStylesheets;
 
   /// True to enable Content Security Policy.
-  /// This means the HTML page will include *.dart.precompiled.js
-  ///
-  /// This flag has no effect unless [directlyIncludeJS] is enabled.
+  /// This means the HTML page will not have inlined .js code.
   final bool contentSecurityPolicy;
 
   /// True to include the compiled JavaScript directly from the HTML page.
   /// If enabled this will remove "packages/browser/dart.js" and replace
   /// `type="application/dart"` scripts with equivalent *.dart.js files.
-  ///
-  /// If [contentSecurityPolicy] enabled, this will reference files
-  /// named *.dart.precompiled.js.
   final bool directlyIncludeJS;
 
   /// Run transformers to create a releasable app. For example, include the
@@ -93,14 +88,14 @@ class TransformOptions {
   // reachable (entry point+imported) html if deploying. See dartbug.com/17199.
   final LintOptions lint;
 
-  /// This will automatically inject `platform.js` from the `web_components`
+  /// This will automatically inject the polyfills from the `web_components`
   /// package in all entry points, if it is not already included.
-  final bool injectPlatformJs;
+  final bool injectWebComponentsJs;
 
   TransformOptions({entryPoints, this.inlineStylesheets,
       this.contentSecurityPolicy: false, this.directlyIncludeJS: true,
       this.releaseMode: true, this.lint: const LintOptions(),
-      this.injectBuildLogsInOutput: false, this.injectPlatformJs: true})
+      this.injectBuildLogsInOutput: false, this.injectWebComponentsJs: true})
       : entryPoints = entryPoints == null ? null
           : entryPoints.map(systemToAssetPath).toList();
 

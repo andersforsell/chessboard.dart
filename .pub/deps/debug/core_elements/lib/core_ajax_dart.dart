@@ -37,6 +37,8 @@ class CoreAjax extends PolymerElement with ChangeNotifier  {
     this.xhr = document.createElement('core-xhr-dart');
   }
 
+  factory CoreAjax() => document.createElement('core-ajax-dart');
+
   /**
    * Fired when a response is received.
    */
@@ -88,21 +90,21 @@ class CoreAjax extends PolymerElement with ChangeNotifier  {
   bool get auto => __$auto; bool __$auto = false; @reflectable set auto(bool value) { __$auto = notifyPropertyChange(#auto, __$auto, value); }
 
   /**
-   * Parameters to send to the specified URL, as JSON.
+   * Parameters to send to the specified URL, as JSON string or Map object.
    */
   @reflectable @published
-  String get params => __$params; String __$params = ''; @reflectable set params(String value) { __$params = notifyPropertyChange(#params, __$params, value); }
+  dynamic get params => __$params; dynamic __$params = ''; @reflectable set params(dynamic value) { __$params = notifyPropertyChange(#params, __$params, value); }
 
   /**
-   * The response for the most recently made request, or null if it hasn't
-   * completed yet or the request resulted in error.
+   * The response for the current request, or null if it hasn't completed yet or
+   * the request resulted in error.
    */
   @reflectable @published
   dynamic get response => __$response; dynamic __$response; @reflectable set response(dynamic value) { __$response = notifyPropertyChange(#response, __$response, value); }
 
   /**
-   * The error for the most recently made request, or null if it hasn't
-   * completed yet or the request resulted in success.
+   * The error for the current request, or null if it hasn't completed yet or
+   * the request resulted in success.
    */
   @reflectable @published
   dynamic get error => __$error; dynamic __$error; @reflectable set error(dynamic value) { __$error = notifyPropertyChange(#error, __$error, value); }
@@ -138,7 +140,8 @@ class CoreAjax extends PolymerElement with ChangeNotifier  {
    *         body='{"foo":1, "bar":2}'>
    *     </core-ajax>
    */
-  String body;
+  @reflectable @published
+  String get body => __$body; String __$body; @reflectable set body(String value) { __$body = notifyPropertyChange(#body, __$body, value); }
 
   /**
    * Content type to use when sending data.
@@ -155,6 +158,26 @@ class CoreAjax extends PolymerElement with ChangeNotifier  {
    * @default false
    */
   bool withCredentials = false;
+
+  /**
+   * Whether the current request is currently loading.
+   *
+   * @attribute loading
+   * @type boolean
+   * @default false
+   */
+  @reflectable @published
+  bool get loading => __$loading; bool __$loading = false; @reflectable set loading(bool value) { __$loading = notifyPropertyChange(#loading, __$loading, value); }
+
+  /**
+   * The progress of the current request.
+   *
+   * @attribute progress
+   * @type {loaded: number, total: number, lengthComputable: boolean}
+   * @default {}
+   */
+  @reflectable @published
+  CoreAjaxProgress get progress => __$progress; CoreAjaxProgress __$progress; @reflectable set progress(CoreAjaxProgress value) { __$progress = notifyPropertyChange(#progress, __$progress, value); }
 
   /**
    * The currently active request.
@@ -180,6 +203,7 @@ class CoreAjax extends PolymerElement with ChangeNotifier  {
     var response = this.evalResponse(xhr);
     if (xhr == this.activeRequest) {
       this.response = response;
+      loading = false;
     }
     this.fire('core-response', detail: {'response': response, 'xhr': xhr});
   }
@@ -193,7 +217,14 @@ class CoreAjax extends PolymerElement with ChangeNotifier  {
     this.fire('core-error', detail: {'response': response, 'xhr': xhr});
   }
 
+  void processProgress(ProgressEvent progress, HttpRequest xhr) {
+    if (!identical(xhr, activeRequest)) return;
+    this.progress = new CoreAjaxProgress(loaded: progress.loaded,
+        total: progress.total, lengthComputable: progress.lengthComputable);
+  }
+
   complete(xhr) {
+    if (!identical(xhr, activeRequest)) return;
     this.fire('core-complete', detail: {'response': xhr.status, 'xhr': xhr});
   }
 
@@ -263,6 +294,10 @@ class CoreAjax extends PolymerElement with ChangeNotifier  {
     this.autoGo();
   }
 
+  bodyChanged() {
+    this.autoGo();
+  }
+
   autoChanged() {
     this.autoGo();
   }
@@ -293,7 +328,11 @@ class CoreAjax extends PolymerElement with ChangeNotifier  {
     }
     var headers = firstNonNull(this.headers, args.headers, {});
 */
-    var params = this.params.isEmpty ? {} : JSON.decode(this.params);
+    var params;
+    if (this.params.isEmpty) params = {};
+    else if (this.params is String) params = JSON.decode(this.params);
+    else if (this.params is Map) params = this.params;
+
     var headers = firstNonNull(this.headers, {});
     if (headers is String) {
       headers = JSON.decode(headers);
@@ -310,7 +349,7 @@ class CoreAjax extends PolymerElement with ChangeNotifier  {
         this.handleAs == 'document') {
       responseType = this.handleAs;
     }
-    this.response = this.error = null;
+    this.response = this.error = this.progress = null;
     this.activeRequest = url == null ? null : this.xhr.request(
         url: url,
         method: method,
@@ -321,7 +360,33 @@ class CoreAjax extends PolymerElement with ChangeNotifier  {
         responseType: responseType,
         callback: this.receive
     );
+    if (this.activeRequest != null) {
+      loading = true;
+      var request = activeRequest;
+      activeRequest.on['progress'].listen((ProgressEvent e) {
+        processProgress(e, request);
+      });
+    } else {
+      progress = new CoreAjaxProgress(lengthComputable: false);
+    }
     return this.activeRequest;
   }
 
+  void abort() {
+    if (activeRequest == null) return;
+    activeRequest.abort();
+    activeRequest = null;
+    loading = false;
+    progress = null;
+  }
+}
+
+class CoreAjaxProgress extends ChangeNotifier {
+  @reflectable @observable int get loaded => __$loaded; int __$loaded; @reflectable set loaded(int value) { __$loaded = notifyPropertyChange(#loaded, __$loaded, value); }
+  @reflectable @observable int get total => __$total; int __$total; @reflectable set total(int value) { __$total = notifyPropertyChange(#total, __$total, value); }
+  @reflectable @observable bool get lengthComputable => __$lengthComputable; bool __$lengthComputable; @reflectable set lengthComputable(bool value) { __$lengthComputable = notifyPropertyChange(#lengthComputable, __$lengthComputable, value); }
+  CoreAjaxProgress({loaded, total, lengthComputable}) : __$loaded = loaded, __$total = total, __$lengthComputable = lengthComputable;
+
+  String toString() =>
+      '{loaded: $loaded, total: $total, lengthComputable: $lengthComputable}';
 }

@@ -1,2 +1,2 @@
-1.8.0-dev.4.6
-observe,polymer/src/build/delete_file,polymer/src/build/mirrors_remover,polymer/src/build/remove_sourcemap_comment,smoke/src/default_transformer
+1.9.0-dev.0.0
+code_transformers/src/delete_file,observe,polymer/src/build/mirrors_remover,smoke/src/default_transformer
