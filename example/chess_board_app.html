@@ -12,7 +12,7 @@
 <link rel="import" href="../../packages/core_elements/core_drawer_panel.html">
 <link rel="import" href="../../packages/paper_elements/paper_button.html">
 <link rel="import" href="../../packages/paper_elements/paper_icon_button.html">
-<link rel="import" href="../../packages/paper_elements/paper_input_decorator.html">
+<link rel="import" href="../../packages/paper_elements/paper_input.html">
 <link rel="import" href="../../packages/paper_elements/paper_action_dialog.html">
 
 <!-- import the chess-board -->
@@ -78,9 +78,8 @@
       </core-header-panel>
     </core-drawer-panel>
     <paper-action-dialog id="loaddlg" style="width:80%" heading="Load Game">
-      <paper-input-decorator floating style="width:100%" label="FEN or PGN">
-        <input id="pos_input" is="core-input">
-      </paper-input-decorator>
+      <paper-input id="pos_input" floating style="width:100%" label="FEN or PGN">
+      </paper-input>
       <paper-button dismissive>Cancel</paper-button>
       <paper-button affirmative autofocus on-tap="{{okClicked}}">OK</paper-button>
     </paper-action-dialog>

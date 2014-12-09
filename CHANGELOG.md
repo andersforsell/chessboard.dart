@@ -1,3 +1,7 @@
+### 0.1.4
+
+Changed back to using paper-input.
+
 ### 0.1.3
 
 Upgraded to new Polymer version.
