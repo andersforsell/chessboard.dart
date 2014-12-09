@@ -3742,8 +3742,6 @@ html /deep/ .paper-shadow-bottom-z-5 {
 
 
 
-
-
 <style shim-shadowdom="">
   /* FIXME consider theming */
 
@@ -3859,6 +3857,11 @@ html /deep/ .paper-shadow-bottom-z-5 {
 // This empty script is here to workaround issue
 // https://github.com/dart-lang/core-elements/issues/11
 </script>
+
+
+
+
+
 
 
 <polymer-element name="core-style" hidden="">
@@ -4665,6 +4668,98 @@ polyfill-next-selector {
   </script>
 
 </polymer-element>
+
+
+<polymer-element name="paper-input">
+
+<template>
+
+  <style>
+    :host {
+      display: inline-block;
+    }
+  </style>
+
+  <paper-input-decorator id="decorator" label="{{label}}" floatinglabel="{{floatingLabel}}" value="{{value}}" disabled?="{{disabled}}">
+    <input is="core-input" value="{{value}}" committedvalue="{{committedValue}}" on-change="{{changeAction}}" disabled?="{{disabled}}">
+  </paper-input-decorator>
+
+</template>
+
+<script>
+
+  Polymer('paper-input', {
+
+    publish: {
+      /**
+       * The label for this input. It normally appears as grey text inside
+       * the text input and disappears once the user enters text.
+       *
+       * @attribute label
+       * @type string
+       * @default ''
+       */
+      label: '',
+
+      /**
+       * If true, the label will "float" above the text input once the
+       * user enters text instead of disappearing.
+       *
+       * @attribute floatingLabel
+       * @type boolean
+       * @default false
+       */
+      floatingLabel: false,
+
+      /**
+       * Set to true to style the element as disabled.
+       *
+       * @attribute disabled
+       * @type boolean
+       * @default false
+       */
+      disabled: {value: false, reflect: true},
+
+      /**
+       * The current value of the input.
+       *
+       * @attribute value
+       * @type String
+       * @default ''
+       */
+      value: '',
+
+      /**
+       * The most recently committed value of the input.
+       *
+       * @attribute committedValue
+       * @type String
+       * @default ''
+       */
+      committedValue: ''
+
+    },
+
+    valueChanged: function() {
+      this.$.decorator.updateLabelVisibility(this.value);
+    },
+
+    changeAction: function(e) {
+      if (!window.ShadowDOMPolyfill) {
+        // re-fire event that does not bubble across shadow roots
+        this.fire('change', null, this);
+      }
+    }
+
+  });
+
+</script>
+
+</polymer-element>
+
+
+
+
 
 
 
@@ -6249,9 +6344,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </core-header-panel>
     </core-drawer-panel>
     <paper-action-dialog id="loaddlg" style="width:80%" heading="Load Game">
-      <paper-input-decorator floating="" style="width:100%" label="FEN or PGN">
-        <input id="pos_input" is="core-input">
-      </paper-input-decorator>
+      <paper-input id="pos_input" floating="" style="width:100%" label="FEN or PGN">
+      </paper-input>
       <paper-button dismissive="">Cancel</paper-button>
       <paper-button affirmative="" autofocus="" on-tap="{{okClicked}}">OK</paper-button>
     </paper-action-dialog>
@@ -6259,7 +6353,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   
 </polymer-element>
 
-<style>
+<style shim-shadowdom="">
       html /deep/ paper-action-dialog {
         font-family: "Roboto",Helvetica,Arial,sans-serif;
       }
